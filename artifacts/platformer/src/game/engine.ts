@@ -5,15 +5,15 @@ export const TILE_SIZE = 32;
 
 const GRAVITY = 0.8;
 const JUMP_FORCE = -17;
-const ACCELERATION = 0.8;
-const FRICTION_GROUND = 0.7;
-const FRICTION_AIR = 0.8;
+const ACCELERATION = 1.5;
+const FRICTION_GROUND = 0.88;
+const FRICTION_AIR = 0.92;
 const MAX_FALL_SPEED = 16;
 const COYOTE_FRAMES = 60;
 const JUMP_BUFFER_FRAMES = 8;
 const PLAYER_W = 26;
 const PLAYER_H = 28;
-const MAX_SPEED = 24;
+const MAX_SPEED = 12;
 
 export function parseLevel(levelIndex: number): LevelData {
   const raw = LEVELS[levelIndex];
