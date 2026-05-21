@@ -13,6 +13,7 @@ const COYOTE_FRAMES = 60;
 const JUMP_BUFFER_FRAMES = 8;
 const PLAYER_W = 26;
 const PLAYER_H = 28;
+const MAX_SPEED = 12;
 
 export function parseLevel(levelIndex: number): LevelData {
   const raw = LEVELS[levelIndex];
@@ -145,6 +146,9 @@ export function updatePlayer(
   const friction = player.onGround ? FRICTION_GROUND : FRICTION_AIR;
   player.vx *= friction;
   if (Math.abs(player.vx) < 0.05) player.vx = 0;
+
+  if (player.vx > MAX_SPEED) player.vx = MAX_SPEED;
+  if (player.vx < -MAX_SPEED) player.vx = -MAX_SPEED;
 
   player.vy += GRAVITY;
   if (player.vy > MAX_FALL_SPEED) player.vy = MAX_FALL_SPEED;
