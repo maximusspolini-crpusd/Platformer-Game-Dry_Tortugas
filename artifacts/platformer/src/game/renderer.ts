@@ -158,17 +158,17 @@ function drawHUD(
   ctx.font = "bold 14px 'Courier New', monospace";
   ctx.textAlign = "left";
 
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(8, 8, 200, 26);
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(8, 8, 210, 26);
   ctx.fillStyle = COLORS.text;
   ctx.fillText(
-    `LEVEL ${state.level + 1}/${6}   DEATHS: ${state.deaths}`,
+    `LEVEL ${state.level + 1}/6   DEATHS: ${state.deaths}`,
     14,
     26
   );
 
   ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.fillRect(canvasW - 140, 8, 132, 26);
   ctx.fillStyle = COLORS.textDim;
   const secs = Math.floor(state.time / 60);
@@ -180,10 +180,48 @@ function drawHUD(
     26
   );
 
+  // Speed meter
+  const speed = Math.abs(state.player.vx);
+  const maxDisplay = 14;
+  const pct = Math.min(speed / maxDisplay, 1);
+  const meterW = 160;
+  const meterH = 10;
+  const meterX = canvasW / 2 - meterW / 2;
+  const meterY = 12;
+
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(meterX - 2, meterY - 2, meterW + 4, meterH + 4);
+
+  // gradient bar colour: green → yellow → red as speed increases
+  const r = Math.round(pct * 255);
+  const g = Math.round((1 - pct * 0.6) * 220);
+  const barColor = `rgb(${r},${g},50)`;
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.fillRect(meterX, meterY, meterW, meterH);
+  ctx.fillStyle = barColor;
+  ctx.fillRect(meterX, meterY, meterW * pct, meterH);
+
+  if (pct >= 0.99) {
+    ctx.shadowColor = barColor;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = barColor;
+    ctx.fillRect(meterX, meterY, meterW, meterH);
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.textAlign = "center";
+  ctx.font = "9px 'Courier New', monospace";
+  ctx.fillStyle = pct >= 0.99 ? "#fff" : COLORS.textDim;
+  ctx.fillText(pct >= 0.99 ? "MAX SPEED!" : "SPEED", canvasW / 2, meterY + meterH + 10);
+
   ctx.textAlign = "center";
   ctx.fillStyle = COLORS.textDim;
   ctx.font = "11px 'Courier New', monospace";
-  ctx.fillText("[A/D] Move  [Space] Jump  [R] Restart  [Tab] Controls", canvasW / 2, canvasH - 10);
+  ctx.fillText(
+    "[A/D] Move  [Hold Space] Jump  [R] Restart  [Tab] Controls",
+    canvasW / 2,
+    canvasH - 10
+  );
 }
 
 function drawDeathFlash(

@@ -20,7 +20,6 @@ export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<GameState>(initGameState(0));
   const keysRef = useRef<Set<string>>(new Set());
-  const prevJumpRef = useRef(false);
   const rafRef = useRef<number>(0);
   const timeRef = useRef(0);
 
@@ -44,7 +43,11 @@ export default function Game() {
           e.preventDefault();
           stateRef.current.showControls = !stateRef.current.showControls;
         }
-        if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+        if (
+          e.code === "Space" ||
+          e.code === "ArrowUp" ||
+          e.code === "KeyW"
+        ) {
           e.preventDefault();
         }
       } else {
@@ -92,8 +95,6 @@ export default function Game() {
           if (nextLevel >= TOTAL_LEVELS) {
             state.won = true;
           } else {
-            const nextLevelData = parseLevel(nextLevel);
-            const nextPlayer = createPlayer(nextLevelData);
             stateRef.current = {
               ...initGameState(nextLevel),
               deaths: state.deaths,
@@ -113,13 +114,11 @@ export default function Game() {
         keys.has("Space") ||
         keys.has("ArrowUp") ||
         keys.has("KeyW");
-      const jumpPressed = jumpHeld && !prevJumpRef.current;
-      prevJumpRef.current = jumpHeld;
 
       updateParticles(state.particles);
 
       if (state.goalFlash <= 0) {
-        const result = updatePlayer(state, { left, right, jumpPressed });
+        const result = updatePlayer(state, { left, right, jumpHeld });
 
         if (result.died) {
           spawnParticles(
@@ -189,7 +188,8 @@ export default function Game() {
       <div
         style={{
           position: "relative",
-          boxShadow: "0 0 40px rgba(50,200,150,0.15), 0 0 80px rgba(0,0,0,0.8)",
+          boxShadow:
+            "0 0 40px rgba(50,200,150,0.15), 0 0 80px rgba(0,0,0,0.8)",
           border: "1px solid rgba(100,100,160,0.3)",
         }}
       >

@@ -1,415 +1,115 @@
+// Momentum-based levels
+// Physics reference: terminal vx ~13 px/frame on ground, ~unlimited in air (friction 0.997)
+// Jump arc at max speed: ~24 tiles horizontal distance
+// Gap sizes: 4=easy, 7=medium, 10=hard, 14=needs speed, 18=near-max, 22=max speed
+// All levels designed around building and sustaining momentum
+// Hold SPACE to auto-jump on landing!
+
 export const LEVELS: string[] = [
-  // Level 1
-  `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-Pkkkk                                                 P
-Pkkkk                                                 P
-P                                                     P
-P                                                     P
-P                                                     P
-P                                                     P
-P                                                     P
-P                                                     P
-P                                                     P
-P                           P        PP      PP       P
-P                           P                         P
-P                           P                         P
-P  S                        P                         P
-PPPPPP       PPPP    PP     PKKKKKKKKKKKKKKKKKK       P
-PKKKKKKKKKKKKKKKKKKKKKKKKKKKPPPPPPPPPPPPPPPPPPP       P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP       P
-P                                                     P
-P                                                     P
-P                                                     P
-P                                                     P
-P                                                     P
-G                                                     P
-G                                                     P
-G                                                     P
-G                                                     P
-PPPPP    PP     PP      PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                       P    
-PKKKKKKKKKKKKKKKKKKKKKKKP
-PPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-  // Level 2
-  `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                  G                   P
-P                                      P
-P                PPPPP                 P
-P                                      P
-P         PPPPP           PPPPP        P
-P                                      P
-P    K              K             K    P
-P  PPPPP          PPPPP         PPPPP  P
-P                                      P
-P                                      P
-P         PPPPP           PPPPP        P
-P                                      P
-P                KKKKK                 P
-P                PPPPP                 P
-P                                      P
-P    PPPPP                             P
-P             PPPPP           PPPPP    P
-P                                      P
-P       K                              P
-P     PPPPP          PPPPP             P
-P                                      P
-P                                      P
-P             PPPPP                    P
-P                                      P
-P    PPPPP            KKKKK            P
-P                     PPPPP            P
-P                                      P
-P            PPPPP           PPPPP     P
-P                                      P
-P    K                                 P
-P  PPPPP             PPPPP             P
-P                                      P
-P           PPPPP                      P
-P                                      P
-P                     PPPPP            P
-P                                      P
-P    PPPPP                             P
-P             KKKKKKKKKK               P
-P             PPPPPPPPPP               P
-P                                      P
-P                                      P
-P    PPPPP            PPPPP            P
-P                                      P
-P             K                        P
-P           PPPPP             PPPPP    P
-P                                      P
-P                                      P
-P    PPPPP           PPPPP             P
-P                                      P
-P             K                        P
-P           PPPPP                      P
-P                                      P
-P                                      P
-P    PPPPP                             P
-P             PPPPP          PPPPP     P
-P                                      P
-P                      K               P
-P                    PPPPP             P
-P                                      P
-P           PPPPP                      P
-P                                      P
-P    PPPPP            PPPPP            P
-P                              PPPPP   P
-P             KKKKK                    P
-P             PPPPP                    P
-P                                      P
-P                                      P
-P    PPPPP                   PPPPP     P
-P             PPPPP                    P
-P                                      P
-P                      PPPPP           P
-P             K                        P
-P           PPPPP                      P
-P                                      P
-P                                      P
-P    PPPPP            PPPPP            P
-P                                      P
-P             PPPPP                    P
-P                                      P
-P    K                                 P
-P  PPPPP             PPPPP             P
-P                                      P
-P                                      P
-P           PPPPP           PPPPP      P
-P                                      P
-P    PPPPP                             P
-P             KKKKK                    P
-P             PPPPP                    P
-P                                      P
-P                                      P
-P    PPPPP           PPPPP             P
-P                                      P
-P             K                        P
-P           PPPPP                      P
-P                                      P
-P    S                                 P
-P  PPPPP                               P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─────────────────────────────────────────────────────────────────
+// LEVEL 1 — "Rolling Start"
+// Intro to momentum. Short runways, small gaps that grow.
+// Gaps: 4, 5, 6, 7 tiles — learn that faster = farther
+// ─────────────────────────────────────────────────────────────────
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                            P
+P                                                                            P
+P                                                                            P
+P                                                                            P
+P                                                                            P
+P  S                      C                    C                       G    P
+PPPPPPPPPPPPPPPPPPPP    PPPPPPPPPPPPPPP     PPPPPPPPPPPPPPP      PPPPPPPPPPPPPP
+P                   KKKK              KKKKKKK              KKKKKKK            P
+P                   KKKK              KKKKKKK              KKKKKKK            P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-  // Level 3
-  `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                              P
-P                                                                              P
-P                                                                              P
-P  G     K                                                                     P
-P              K            K               KK        K        K               P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP       P
-P                                                                              P
-P                                                              K               P
-P                                                                         PPPPPP
-P                                                                         PPPPPP
-P  C             K      K           K                 K                   PPPPPP
-P          PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                      K                       P
-PPPP                           K                       K                       P
-PPPP                                                                           P
-PPPP                                                                           P
-PPPP   K            K                         K                                P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP    C    P
-P                                                                              P
-P                                                          K                   P
-P                            K                                            PPPPPP
-P                                                                         PPPPPP
-P   C                K                K             K             K       PPPPPP
-P          PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                              P
-PPPPP                                                                          P
-PPPPP                                                                          P
-PPPPP                                                                          P
-PPPPP K    K        K        K             K             K     K               P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP       P
-P                                                                         C    P
-P                                                                              P
-P                                                                              P
-P                                                                         PPPPPP
-P                                                                         PPPPPP
-P                                                                         PPPPPP
-P             KK                 K       K              K         K       PPPPPP
-P    C     PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                              P
-P                                                                              P
-PPPPPP                                                                         P
-PPPPPP                                                                         P
-PPPPPP  K   K        K         K                    K            K        C    P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP         P
-P                                                                              P
-P                                                                         PPPPPP
-P                                                                         PPPPPP
-P                         K                                               PPPPPP
-P   C           K         K              K                    K           PPPPPP
-P          PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                              P
-PPPPP                                                                          P
-PPPPP                                                                          P
-PPPPP                                                                          P
-PPPPP                                                                          P
-PPPPP            KK                             KKK                            P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP  C    P
-P                                                                              P
-P                                                                              P
-P                                                                         PPPPPP
-P                                                                         PPPPPP
-P            K                   K            K                  K        PPPPPP
-P   C      PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                              P
-P                                                                              P
-PPPPP                                                                          P
-PPPPP                                                                          P
-PPPPP   K        K        K            K           K         K                 P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP   C   P
-P                                                                              P
-P                                                                              P
-P                                                                          PPPPP
-P                                                                          PPPPP
-P     S        K              K            K                       K       PPPPP
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─────────────────────────────────────────────────────────────────
+// LEVEL 2 — "Speed Alley"
+// Longer runways. Gaps grow to need real momentum.
+// Hold space and run — don't stop!
+// Gaps: 5, 7, 9, 7, 5 tiles
+// ─────────────────────────────────────────────────────────────────
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                                        P
+P                                                                                        P
+P                                                                                        P
+P                                                                                        P
+P  S                     C                      C                    C              G   P
+PPPPPPPPPPPPPPPPPPPP    PPPPPPPPPPPPPPP      PPPPPPPPPPPPPP      PPPPPPPPP   PPPPPPPPPPPPP
+P                   KKKKK              KKKKKKK              KKKKKKK       KKK            P
+P                   KKKKK              KKKKKKK              KKKKKKK       KKK            P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-  // Level 4
-  `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P G                                                                                                                    P
-P PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP                 P
-P            P                                                                                        P       PPP      P
-P            P                                                                                        P                P
-P            P                                                                                        P                P
-P            PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP                P
-P                                                                                                                      P
-P                                                                                                          PPP         P
-P                                                                                                                      P
-P                                              K                                                                       P
-P      C          K        K    K         K          K              K              K      K                            P
-P            PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                                                                      P
-P   PPPP                                                                                                               P
-P                                                                                                                      P
-P                    K                  K                       K                                                      P
-P                    K        K         K      K      K                   K             K                              P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP     C          P
-P                  PPPPPPPPPPPPPP                                                                                      P
-P                                                                                                                      P
-P                                                                                                 K          PPPPPPP   P
-P                                             K                     K                     K                            P
-P     C                 K  K     K       K          KK     K                   K           K                           P
-P            PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                                                     P                P
-P  PPPP                                                                                               P                P
-P                     K                                                                               P                P
-P             K               K                  K                                                    P                P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP       P                P
-P                                                                                                     P                P
-P                                                                                                C    P                P
-P                                                                                                     P                P
-P                                                                                                     P                P
-P                                       PP                                                       PPPPPP                P
-P               PPP   P     PP    P           PP      PPP       P     P P P P                         P                P
-P            KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK                   P                P
-P     PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP                P
-P                                                                                                     P                P
-P   C                                                                                                 P                P
-P                                                                                                     P                P
-P                                                                                                     P                P
-PPPPP                                                                                                 P                P
-P                                                                                                     P                P
-P               K          K      K        K       K       K         K                                P                P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP            P                P
-P                                                                                                     P                P
-P                                                                                          C          P                P
-P                                                                                                     P                P
-P                                                         PPPP        PPP                             P                P
-P                               PPPPP       PP                                 PPP         PPPPPP     P                P
-P                         PPP                       PPP          PPP                                  P                P
-P                 PPP                                                                                 P                P
-P              KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK  PPP           P                P
-P       PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP               P                P
-P                                                                                                     P                P
-P    C                                                                                                P                P
-P                                                                                                     P                P
-P                                                                                                     P                P
-PPPPPP                          PPP          PPP                                                      P                P
-P                                                                                                     P                P
-P              PPP      PPP            PP              P      PPP    P      PPP                       P                P
-P            KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK                  P                P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP       P                P
-P                                                                                                 C   P                P
-P                                                                                                     P                P
-P                                                                                                     P                P
-P                                                                                                 PPPPP                P
-P                                             PPP                                                     P                P
-P                                                             PPP                                     P                P
-P  S                                                                                                  P                P
-PPPPPPP       PP     PP    PPP    PPPPPPPPP         PPP                PPP      PP      PP     PPP    P                P
-PPPPPPPKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKP                P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─────────────────────────────────────────────────────────────────
+// LEVEL 3 — "Canyon Run"
+// Two-tier level. Drop down to the lower floor to build speed.
+// Upper platforms give shortcuts but lower path has momentum.
+// Gaps: 7, 10, 12, 9 tiles — need real speed to clear the big ones
+// ─────────────────────────────────────────────────────────────────
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                                              P
+P                                                                                              P
+P                                                          PPPP      PPPPPPP                   P
+P                 PPPPPPPPPP            PPPPPPPPP                               G              P
+P  S                                                                         PPPPPPPPPPPPPPPPPP
+P  PPPPPPPPPPPPPP           PPPPPPPPPP           PPPPPPPPPP          PPPPPPP                   P
+P                KKKKKKKKKKK          KKKKKKKKKKKK          KKKKKKKKKK       KKKK              P
+P                KKKKKKKKKKK          KKKKKKKKKKKK          KKKKKKKKKK       KKKK              P
+P                KKKKKKKKKKK          KKKKKKKKKKKK          KKKKKKKKKK       KKKK              P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-  // Level 5
-  `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                   P
-P                  G                                P
-P               PPPPPPP                             P
-P                     K                             P
-P                      K                            P
-P                       KP                          P
-P                        K                          P
-P                         K                         P
-P                          K                        P
-P                           K                       P
-P                            KP                     P
-P                             K                     P
-P                              K                    P
-P                               KP                  P
-P                                K                  P
-P                                 K                 P
-P                                  KP               P
-P                                   K               P
-P                                    K              P
-P                                     K             P
-P                                      K            P
-P                                       K PP        P
-P                                                   P
-P                                                   P
-P                                                   P
-P                                                   P
-P                                                 PPP
-P                                                   P
-P                                                   P
-P                                                   P
-P                                                   P
-P            PP        PP      P     P       P      P
-P    PPPKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKP
-P    PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                   P
-P                                                   P
-P                                                   P
-PPP                                                 P
-P                                                   P
-P                                                   P
-P                                                   P
-PKKK                                                P
-PKKKPP                                              P
-PKKK                                                P
-PKKK                                                P
-PKKKK                                               P
-PKKKKK                                              P
-PKKKKKKPP        K                                  P
-PKKKKKKK         P              K    K              P
-PKKKKKKKK             K        K    K               P
-PKKKKKKKKK             KP      K    K               P
-PKKKKKKKKKK             K      K    K               P
-PKKKKKKKKKKKPP           K          K  PPP          P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP         P
-P                                                   P
-P                                                   P
-P                                                   P
-P                                            P      P
-P                                                   P
-P                                                   P
-P  S                                                P
-PPPPPP   P        P    P         P        P         P
-PKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKP
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─────────────────────────────────────────────────────────────────
+// LEVEL 4 — "The Long Haul"
+// No checkpoints for first half — maintain momentum or fall.
+// Gaps: 8, 11, 14, 11, 8 tiles — the 14-tile gap needs near-max speed
+// Two floors: top for slow path (narrow platforms), bottom for speed path
+// ─────────────────────────────────────────────────────────────────
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                                                             P
+P                                                                                                             P
+P         PPPP          PPPP            PPPP              PPPP          PPPP          PPPP                    P
+P                                                                                                             P
+P  S                C                           C                                              C       G      P
+P  PPPPPPPPPPPPPP       PPPPPPPPPPPPPPP                 PPPPPPPPPPPPPP       PPPPPPPPPPPPP      PPPPPPPPPPPPPPPP
+P                KKKKKKKKK             KKKKKKKKKKKKKKKKKK             KKKKKKKKK            KKKKKK              P
+P                KKKKKKKKK             KKKKKKKKKKKKKKKKKK             KKKKKKKKK            KKKKKK              P
+P                KKKKKKKKK             KKKKKKKKKKKKKKKKKK             KKKKKKKKK            KKKKKK              P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-  // Level 6 - Final boss level
-  `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                  P
-P                                G                                 P
-P                             PPPPPPP                              P
-P                                                                  P
-P          K    K    K    K    K    K    K    K    K    K           P
-P        PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP         P
-P                                                                  P
-P                                                                  P
-P    K                                                    K        P
-P    KK          K         K          K         K         KK       P
-P  PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP     P
-P                                                                  P
-P                                                 C                P
-P                                                                  P
-P                                                                  P
-P           K         K         K         K         K              P
-P         PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP             P
-P                                                                  P
-P                                                                  P
-P    K    K    K    K    K    K    K    K    K    K    K    K       P
-P  PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP      P
-P                                                                  P
-P                C                                                 P
-P                                                                  P
-P                                                                  P
-P         K          K         K          K         K              P
-P       PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP           P
-P                                                                  P
-P                                                                  P
-P    K    K    K    K    K    K    K    K    K    K    K    K       P
-P  PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP      P
-P                                                                  P
-P                                                C                 P
-P                                                                  P
-P    PPPPP           PPPPP           PPPPP           PPPPP         P
-P         K               K               K               K        P
-P       PPPP             PPPP            PPPP             PPPP     P
-P                                                                  P
-P                                                                  P
-P    K         K         K         K         K         K           P
-P  PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP        P
-P                                                                  P
-P                C                                                 P
-P                                                                  P
-P     PP      PP      PP      PP      PP      PP      PP           P
-P    KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK          P
-P    PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP         P
-P                                                                  P
-P                                                                  P
-P    K    K    K    K    K    K    K    K    K    K    K            P
-P  PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP        P
-P                                                                  P
-P  S                                            C                  P
-P  PPPP     PPPP     PPPP     PPPP     PPPP                        P
-P  KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK        P
-P  PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP      P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─────────────────────────────────────────────────────────────────
+// LEVEL 5 — "Hyperdrive"
+// Long runways and massive gaps. You need to be at near-max speed.
+// The 16-tile gap is only crossable at high speed. Don't slow down!
+// Gaps: 10, 13, 16, 13, 10 tiles
+// ─────────────────────────────────────────────────────────────────
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                                                                             P
+P                                                                                                                             P
+P                                          PPPP                PPPP                                                           P
+P              PPPPP               PPPP                                  PPPP             PPPP              PPPP              P
+P  S                      C                           C                                                              G        P
+P  PPPPPPPPPPPPPPPPPPP         PPPPPPPPPPPPPPPPPP              PPPPPPPPPPPPPPPPPPP           PPPPPPPPPPPPPPP          PPPPPPPP
+P                    KKKKKKKKKKKK                KKKKKKKKKKKKKKKK                 KKKKKKKKKKKK             KKKKKKKKKKKK       P
+P                    KKKKKKKKKKKK                KKKKKKKKKKKKKKKK                 KKKKKKKKKKKK             KKKKKKKKKKKK       P
+P                    KKKKKKKKKKKK                KKKKKKKKKKKKKKKK                 KKKKKKKKKKKK             KKKKKKKKKKKK       P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+
+// ─────────────────────────────────────────────────────────────────
+// LEVEL 6 — "Grand Prix"
+// The ultimate speed run. Hold right, hold space, never stop.
+// Gaps: 12, 15, 18, 15, 12 — the 18-tile gap REQUIRES max speed.
+// Speed bonus: faster you run, higher you jump. Max speed = win.
+// ─────────────────────────────────────────────────────────────────
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                                                                                                     P
+P                                                                                                                                                     P
+P                                                    PPPP                   PPPP                    PPPP                                              P
+P               PPPP             PPPP                                                                           PPPP              PPPP                P
+P  S                        C                                  C                                                           C                   G      P
+P  PPPPPPPPPPPPPPPPPPP         PPPPPPPPPPPPPPPPPPPP                  PPPPPPPPPPPPPPPPPPPPPP             PPPPPPPPPPPPPPPPPP          PPPPPPPPPPPPPPPPPPP
+P                    KKKKKKKKKKKKK                  KKKKKKKKKKKKKKKKKKK                   KKKKKKKKKKKKKKKK               KKKKKKKKKKKKK                P
+P                    KKKKKKKKKKKKK                  KKKKKKKKKKKKKKKKKKK                   KKKKKKKKKKKKKKKK               KKKKKKKKKKKKK                P
+P                    KKKKKKKKKKKKK                  KKKKKKKKKKKKKKKKKKK                   KKKKKKKKKKKKKKKK               KKKKKKKKKKKKK                P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 ];

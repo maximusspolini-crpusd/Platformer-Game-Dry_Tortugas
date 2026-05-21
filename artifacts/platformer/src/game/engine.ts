@@ -3,17 +3,15 @@ import { LEVELS } from "./levels";
 
 export const TILE_SIZE = 32;
 
-const GRAVITY = 0.8;
-const JUMP_FORCE = -17;
-const ACCELERATION = 1.5;
-const FRICTION_GROUND = 0.88;
-const FRICTION_AIR = 0.92;
-const MAX_FALL_SPEED = 16;
-const COYOTE_FRAMES = 60;
-const JUMP_BUFFER_FRAMES = 8;
+const GRAVITY = 0.48;
+const JUMP_FORCE = -11;
+const ACCELERATION = 0.52;
+const FRICTION_GROUND = 0.96;
+const FRICTION_AIR = 0.997;
+const MAX_FALL_SPEED = 40;
+const COYOTE_FRAMES = 7;
 const PLAYER_W = 26;
 const PLAYER_H = 28;
-const MAX_SPEED = 12;
 
 export function parseLevel(levelIndex: number): LevelData {
   const raw = LEVELS[levelIndex];
@@ -127,7 +125,7 @@ export function updateParticles(particles: Particle[]) {
 
 export function updatePlayer(
   state: GameState,
-  input: { left: boolean; right: boolean; jumpPressed: boolean }
+  input: { left: boolean; right: boolean; jumpHeld: boolean }
 ): { died: boolean; reachedGoal: boolean; hitCheckpoint: string | null } {
   const { player, levelData } = state;
   let died = false;
@@ -147,21 +145,19 @@ export function updatePlayer(
   player.vx *= friction;
   if (Math.abs(player.vx) < 0.05) player.vx = 0;
 
-  if (player.vx > MAX_SPEED) player.vx = MAX_SPEED;
-  if (player.vx < -MAX_SPEED) player.vx = -MAX_SPEED;
-
   player.vy += GRAVITY;
   if (player.vy > MAX_FALL_SPEED) player.vy = MAX_FALL_SPEED;
 
-  if (input.jumpPressed) {
-    player.jumpBufferFrames = JUMP_BUFFER_FRAMES;
+  if (input.jumpHeld) {
+    player.jumpBufferFrames = 12;
   } else if (player.jumpBufferFrames > 0) {
     player.jumpBufferFrames--;
   }
 
   const canJump = player.onGround || player.coyoteFrames > 0;
   if (player.jumpBufferFrames > 0 && canJump) {
-    player.vy = JUMP_FORCE;
+    const speedBonus = Math.min(Math.abs(player.vx) * 0.04, 1.2);
+    player.vy = JUMP_FORCE - speedBonus;
     player.jumpBufferFrames = 0;
     player.coyoteFrames = 0;
     player.squishY = 0.6;
@@ -316,8 +312,11 @@ function resolveAxis(
 
 export function updateCamera(state: GameState, canvasW: number, canvasH: number) {
   const { player, camera } = state;
-  const targetX = player.x + player.width / 2 - canvasW / 2;
-  const targetY = player.y + player.height / 2 - canvasH / 2;
+  const speed = Math.abs(player.vx);
+  const lookAhead = player.facing * speed * 3;
+
+  const targetX = player.x + player.width / 2 + lookAhead - canvasW / 2;
+  const targetY = player.y + player.height / 2 - canvasH * 0.45;
 
   const maxX = state.levelData.width - canvasW;
   const maxY = state.levelData.height - canvasH;
@@ -325,7 +324,8 @@ export function updateCamera(state: GameState, canvasW: number, canvasH: number)
   const clampedX = Math.max(0, Math.min(maxX, targetX));
   const clampedY = Math.max(0, Math.min(maxY, targetY));
 
-  camera.x += (clampedX - camera.x) * 0.1;
+  const lerpSpeed = 0.12 + speed * 0.005;
+  camera.x += (clampedX - camera.x) * Math.min(lerpSpeed, 0.2);
   camera.y += (clampedY - camera.y) * 0.1;
 }
 
@@ -336,7 +336,7 @@ export function initGameState(levelIndex: number): GameState {
     level: levelIndex,
     player,
     camera: {
-      x: player.x - 400,
+      x: player.x - 120,
       y: player.y - 300,
     },
     levelData,
