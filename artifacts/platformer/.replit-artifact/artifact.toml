@@ -15,7 +15,7 @@ paths = [ "/" ]
 localPort = 23841
 
 [services.development]
-run = "python -m pygbag --port 23841 /home/runner/workspace/artifacts/platformer/main.py"
+run = "pnpm --filter @workspace/platformer run dev"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/platformer", "run", "build" ]
