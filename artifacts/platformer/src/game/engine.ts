@@ -3,13 +3,13 @@ import { LEVELS } from "./levels";
 
 export const TILE_SIZE = 32;
 
-const GRAVITY = 0.45;
-const JUMP_FORCE = -10.5;
-const ACCELERATION = 0.55;
-const FRICTION_GROUND = 0.80;
-const FRICTION_AIR = 0.94;
+const GRAVITY = 0.8;
+const JUMP_FORCE = -17;
+const ACCELERATION = 0.8;
+const FRICTION_GROUND = 0.7;
+const FRICTION_AIR = 0.8;
 const MAX_FALL_SPEED = 16;
-const COYOTE_FRAMES = 7;
+const COYOTE_FRAMES = 60;
 const JUMP_BUFFER_FRAMES = 8;
 const PLAYER_W = 26;
 const PLAYER_H = 28;
