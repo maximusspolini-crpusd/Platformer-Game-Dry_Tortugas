@@ -13,7 +13,7 @@ const COYOTE_FRAMES = 60;
 const JUMP_BUFFER_FRAMES = 8;
 const PLAYER_W = 26;
 const PLAYER_H = 28;
-const MAX_SPEED = 12;
+const MAX_SPEED = 24;
 
 export function parseLevel(levelIndex: number): LevelData {
   const raw = LEVELS[levelIndex];
