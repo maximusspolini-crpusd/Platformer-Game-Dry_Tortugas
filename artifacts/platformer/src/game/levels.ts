@@ -43,14 +43,14 @@ export function generateLevelString(levelIndex: number, seed: number): string {
 
   // Gap sizes grow with difficulty
   const minGap = 4 + diff;
-  const maxGap = Math.min(6 + diff * 2, 18);
+  const maxGap = Math.min(6 + diff * 2, 28); // raised cap — late levels get truly huge gaps
 
   // Stepping stone above a gap: 75% at level 0, ~15% at level 7
   const stoneProbability = Math.max(0.15, 0.75 - diff * 0.085);
 
   // Structural lengths
-  const startLen = rand(18, 28); // run-up to first gap
-  const endLen = rand(12, 20);   // landing section before goal wall
+  const startLen = rand(40, 60); // run-up to first gap (longer so player builds real speed)
+  const endLen = rand(25, 40);   // landing section before goal wall
 
   const gapSizes: number[] = [];
   const sepSizes: number[] = []; // floor sections between gaps
@@ -60,7 +60,7 @@ export function generateLevelString(levelIndex: number, seed: number): string {
     const gMin = Math.min(minGap + Math.floor(i * 0.6), maxGap);
     gapSizes.push(rand(gMin, maxGap));
     if (i < gapCount - 1) {
-      sepSizes.push(rand(8, 16));
+      sepSizes.push(rand(12, 22));
     }
   }
 

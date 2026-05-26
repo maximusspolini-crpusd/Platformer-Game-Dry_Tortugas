@@ -1,4 +1,4 @@
-import { GameState, GhostFrame, Particle } from "./types";
+import { GameState, Particle } from "./types";
 import { TILE_SIZE, getTile } from "./engine";
 
 const COLORS = {
@@ -7,8 +7,6 @@ const COLORS = {
   platform: "#6a6a88",
   platformTop: "#8888aa",
   platformShadow: "#3a3a55",
-  hazard: "#ff3030",
-  hazardGlow: "#ff6030",
   hazardDark: "#aa1010",
   goal: "#40ff70",
   goalDim: "#1a6632",
@@ -56,57 +54,24 @@ function drawTile(
     ctx.fillRect(x, y, ts, ts);
 
   } else if (type === "G") {
-    // Goal wall — glowing green finish blocks
     const wave = Math.sin(time * 0.06 + row * 0.4) * 0.2 + 0.8;
     const flicker = Math.sin(time * 0.13 + col * 1.7) * 0.1 + 0.9;
     const alpha = wave * flicker;
-
-    // Dark base
     ctx.fillStyle = COLORS.goalDim;
     ctx.fillRect(x, y, ts, ts);
-
-    // Bright overlay
     ctx.fillStyle = `rgba(64, 255, 112, ${alpha * 0.55})`;
     ctx.fillRect(x, y, ts, ts);
-
-    // Inner highlight
     ctx.fillStyle = `rgba(180, 255, 210, ${alpha * 0.35})`;
     ctx.fillRect(x + 3, y + 3, ts - 6, ts - 6);
-
-    // Glow
     ctx.shadowColor = COLORS.goal;
     ctx.shadowBlur = 14 * alpha;
     ctx.fillStyle = `rgba(64, 255, 112, ${alpha * 0.25})`;
     ctx.fillRect(x, y, ts, ts);
     ctx.shadowBlur = 0;
-
-    // Grid lines so it looks like individual blocks in the wall
     ctx.strokeStyle = `rgba(0, 80, 30, 0.5)`;
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 0.5, y + 0.5, ts - 1, ts - 1);
   }
-}
-
-export function drawGhostAt(
-  ctx: CanvasRenderingContext2D,
-  frame: GhostFrame,
-  playerW: number,
-  playerH: number
-) {
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#88ddff";
-  ctx.fillRect(frame.x + 2, frame.y + 2, playerW, playerH);
-  ctx.fillStyle = "#aaeeff";
-  ctx.fillRect(frame.x, frame.y, playerW, playerH);
-
-  const eyeX =
-    frame.facing === 1
-      ? frame.x + playerW * 0.65
-      : frame.x + playerW * 0.15;
-  ctx.fillStyle = "rgba(0,0,60,0.7)";
-  ctx.fillRect(eyeX, frame.y + playerH * 0.25, 4, 4);
-
-  ctx.globalAlpha = 1;
 }
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
@@ -116,7 +81,6 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
 
   const sy = player.squishY < 1 ? player.squishY : player.stretchY;
   const sx = sy < 1 ? 2 - sy : 1 / sy;
-
   const drawW = player.width * sx;
   const drawH = player.height * sy;
   const drawX = cx - drawW / 2;
@@ -124,41 +88,27 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
 
   ctx.shadowColor = COLORS.playerHighlight;
   ctx.shadowBlur = 12;
-
   ctx.fillStyle = COLORS.playerDark;
   ctx.fillRect(drawX + 2, drawY + 2, drawW, drawH);
-
   ctx.fillStyle = COLORS.player;
   ctx.fillRect(drawX, drawY, drawW, drawH);
-
   ctx.fillStyle = COLORS.playerHighlight;
   ctx.fillRect(drawX + 4, drawY + 3, drawW * 0.35, 4);
 
   const eyeX =
-    player.facing === 1
-      ? drawX + drawW * 0.65
-      : drawX + drawW * 0.15;
+    player.facing === 1 ? drawX + drawW * 0.65 : drawX + drawW * 0.15;
   ctx.fillStyle = "#0a0a1a";
   ctx.fillRect(eyeX, drawY + drawH * 0.25, 5, 5);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(eyeX + 1, drawY + drawH * 0.25, 2, 2);
-
   ctx.shadowBlur = 0;
 
-  // Ground trail at speed
   const speed = Math.abs(player.vx);
   if (speed > 1 && player.onGround) {
     const trailAlpha = Math.min(speed / 12, 0.45);
     ctx.fillStyle = `rgba(50, 200, 150, ${trailAlpha})`;
-    ctx.fillRect(
-      drawX - player.vx * 3,
-      drawY + drawH * 0.3,
-      drawW * 0.55,
-      drawH * 0.4
-    );
+    ctx.fillRect(drawX - player.vx * 3, drawY + drawH * 0.3, drawW * 0.55, drawH * 0.4);
   }
-
-  // Air speed lines
   if (speed > 8 && !player.onGround) {
     const dir = player.facing;
     ctx.strokeStyle = `rgba(100,220,255,${Math.min((speed - 8) / 10, 0.5)})`;
@@ -187,11 +137,8 @@ function drawHUD(
   ctx: CanvasRenderingContext2D,
   state: GameState,
   canvasW: number,
-  canvasH: number,
-  hasGhost: boolean,
-  ghostIsWinning: boolean
+  canvasH: number
 ) {
-  // Level + deaths (no "/N" total since levels are endless)
   ctx.font = "bold 14px 'Courier New', monospace";
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -199,7 +146,6 @@ function drawHUD(
   ctx.fillStyle = COLORS.text;
   ctx.fillText(`LEVEL ${state.level + 1}   DEATHS: ${state.deaths}`, 14, 26);
 
-  // Timer
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.fillRect(canvasW - 140, 8, 132, 26);
@@ -217,16 +163,13 @@ function drawHUD(
 
   // Speed meter
   const speed = Math.abs(state.player.vx);
-  const maxDisplay = 14;
-  const pct = Math.min(speed / maxDisplay, 1);
+  const pct = Math.min(speed / 14, 1);
   const meterW = 160;
   const meterH = 10;
   const meterX = canvasW / 2 - meterW / 2;
   const meterY = 11;
-
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.fillRect(meterX - 2, meterY - 2, meterW + 4, meterH + 4);
-
   const r = Math.round(pct * 255);
   const g = Math.round((1 - pct * 0.6) * 220);
   const barColor = `rgb(${r},${g},50)`;
@@ -234,7 +177,6 @@ function drawHUD(
   ctx.fillRect(meterX, meterY, meterW, meterH);
   ctx.fillStyle = barColor;
   ctx.fillRect(meterX, meterY, meterW * pct, meterH);
-
   if (pct >= 0.99) {
     ctx.shadowColor = barColor;
     ctx.shadowBlur = 10;
@@ -242,29 +184,12 @@ function drawHUD(
     ctx.fillRect(meterX, meterY, meterW, meterH);
     ctx.shadowBlur = 0;
   }
-
   ctx.textAlign = "center";
   ctx.font = "9px 'Courier New', monospace";
   ctx.fillStyle = pct >= 0.99 ? "#fff" : COLORS.textDim;
-  ctx.fillText(
-    pct >= 0.99 ? "MAX SPEED!" : "SPEED",
-    canvasW / 2,
-    meterY + meterH + 10
-  );
+  ctx.fillText(pct >= 0.99 ? "MAX SPEED!" : "SPEED", canvasW / 2, meterY + meterH + 10);
 
-  // Ghost indicator
-  if (hasGhost) {
-    ctx.textAlign = "left";
-    ctx.font = "11px 'Courier New', monospace";
-    ctx.fillStyle = ghostIsWinning ? "#88ddff" : "#ff8866";
-    ctx.fillText(
-      ghostIsWinning ? "▶ AHEAD OF GHOST" : "◀ BEHIND GHOST",
-      14,
-      48
-    );
-  }
-
-  // Goal flash overlay text
+  // Level-clear overlay
   if (state.goalFlash > 0) {
     const alpha = Math.min(state.goalFlash * 2, 1);
     ctx.globalAlpha = alpha;
@@ -281,7 +206,6 @@ function drawHUD(
     ctx.globalAlpha = 1;
   }
 
-  // Controls hint
   ctx.textAlign = "center";
   ctx.fillStyle = COLORS.textDim;
   ctx.font = "11px 'Courier New', monospace";
@@ -292,19 +216,6 @@ function drawHUD(
   );
 }
 
-function drawFlash(
-  ctx: CanvasRenderingContext2D,
-  alpha: number,
-  color: string,
-  canvasW: number,
-  canvasH: number
-) {
-  ctx.fillStyle = color
-    .replace(")", `, ${alpha * 0.5})`)
-    .replace("rgb", "rgba");
-  ctx.fillRect(0, 0, canvasW, canvasH);
-}
-
 function drawControlsOverlay(
   ctx: CanvasRenderingContext2D,
   canvasW: number,
@@ -312,12 +223,10 @@ function drawControlsOverlay(
 ) {
   ctx.fillStyle = "rgba(0,0,0,0.78)";
   ctx.fillRect(0, 0, canvasW, canvasH);
-
   ctx.fillStyle = COLORS.text;
   ctx.font = "bold 24px 'Courier New', monospace";
   ctx.textAlign = "center";
   ctx.fillText("CONTROLS", canvasW / 2, canvasH / 2 - 90);
-
   const lines = [
     "A / ← Arrow      — Move Left",
     "D / → Arrow      — Move Right",
@@ -329,16 +238,9 @@ function drawControlsOverlay(
   lines.forEach((l, i) => {
     ctx.fillText(l, canvasW / 2, canvasH / 2 - 35 + i * 30);
   });
-
-  ctx.font = "12px 'Courier New', monospace";
-  ctx.fillStyle = "#88ddff";
-  ctx.fillText(
-    "Ghost replay saves your fastest run per level.",
-    canvasW / 2,
-    canvasH / 2 + 90
-  );
   ctx.fillStyle = COLORS.textDim;
-  ctx.fillText("Press Tab to close", canvasW / 2, canvasH / 2 + 116);
+  ctx.font = "12px 'Courier New', monospace";
+  ctx.fillText("Press Tab to close", canvasW / 2, canvasH / 2 + 90);
 }
 
 export function render(
@@ -346,12 +248,8 @@ export function render(
   state: GameState,
   canvasW: number,
   canvasH: number,
-  time: number,
-  ghostFrame: GhostFrame | null,
-  hasGhost: boolean,
-  ghostIsWinning: boolean
+  time: number
 ) {
-  // Background
   const grd = ctx.createLinearGradient(0, 0, 0, canvasH);
   grd.addColorStop(0, COLORS.bg);
   grd.addColorStop(1, COLORS.bgGrad2);
@@ -378,23 +276,20 @@ export function render(
     }
   }
 
-  if (ghostFrame) {
-    drawGhostAt(ctx, ghostFrame, state.player.width, state.player.height);
-  }
-
   drawParticles(ctx, state.particles);
   drawPlayer(ctx, state);
-
   ctx.restore();
 
   if (state.deathFlash > 0) {
-    drawFlash(ctx, state.deathFlash, "rgb(255, 30, 30)", canvasW, canvasH);
+    ctx.fillStyle = `rgba(255, 30, 30, ${state.deathFlash * 0.45})`;
+    ctx.fillRect(0, 0, canvasW, canvasH);
   }
   if (state.goalFlash > 0) {
-    drawFlash(ctx, state.goalFlash * 0.6, "rgb(64, 255, 112)", canvasW, canvasH);
+    ctx.fillStyle = `rgba(64, 255, 112, ${state.goalFlash * 0.3})`;
+    ctx.fillRect(0, 0, canvasW, canvasH);
   }
 
-  drawHUD(ctx, state, canvasW, canvasH, hasGhost, ghostIsWinning);
+  drawHUD(ctx, state, canvasW, canvasH);
 
   if (state.showControls) {
     drawControlsOverlay(ctx, canvasW, canvasH);
