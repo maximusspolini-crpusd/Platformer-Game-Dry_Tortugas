@@ -113,7 +113,7 @@ export const HANDMADE_LEVELS: string[] = [
   // Three gaps of increasing size; stepping stones above each as a slow-path option
   // The bonus high platform over the third gap rewards players who take the leap of faith
   buildLevel({
-    width: 120,
+    width: 5000,
     gaps: [
       { col: 35, len: 4 },  // easy   — any speed clears this
       { col: 56, len: 6 },  // medium — needs a short run-up
