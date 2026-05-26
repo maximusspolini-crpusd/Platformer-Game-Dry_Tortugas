@@ -128,8 +128,25 @@ export const HANDMADE_LEVELS: string[] = [
       { col: 65, row: 3, len: 5 },
     ],
   }),
+    buildLevel({
+    width: 55,
+    spawnCol: 3,
+    gaps: [
+      {col: 1, len: 27},
+      {col: 29, len: 25}
+    ],
+    platforms: [
+      {col: 28, row: 8, len: 1},
+      {col: 28, row: 7, len: 1},
+      {col: 28, row: 6, len: 1},
+      {col: 28, row: 5, len: 1},
+      {col: 37, row: 5, len: 2},
+      {col: 45, row: 5, len: 2},
+    ],
+  }),
 
 ];
+
 
 // Export total count so UI can display "LEVEL X / N"
 export const HANDMADE_LEVEL_COUNT = HANDMADE_LEVELS.length;
