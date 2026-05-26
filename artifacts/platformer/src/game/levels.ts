@@ -1,115 +1,78 @@
-// Momentum-based levels
-// Physics reference: terminal vx ~13 px/frame on ground, ~unlimited in air (friction 0.997)
-// Jump arc at max speed: ~24 tiles horizontal distance
-// Gap sizes: 4=easy, 7=medium, 10=hard, 14=needs speed, 18=near-max, 22=max speed
-// All levels designed around building and sustaining momentum
-// Hold SPACE to auto-jump on landing!
+// Momentum-based platformer levels — no checkpoints, clean design
+//
+// Physics: ground terminal vx ≈ 13 px/frame, air friction ≈ 0 loss
+// Jump arc at max speed ≈ 18 tiles horizontal distance
+//
+// Gap guide (tiles):
+//   4  = trivial (any speed)
+//   5  = easy
+//   7  = medium (need some runway)
+//   9  = hard (need decent speed)
+//  11  = very hard (near-max speed)
+//  14  = extreme (need full build-up)
+//  17  = near-max speed required
+//  18  = absolute maximum — full commitment
 
 export const LEVELS: string[] = [
 
-// ─────────────────────────────────────────────────────────────────
-// LEVEL 1 — "Rolling Start"
-// Intro to momentum. Short runways, small gaps that grow.
-// Gaps: 4, 5, 6, 7 tiles — learn that faster = farther
-// ─────────────────────────────────────────────────────────────────
-`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                            P
-P                                                                            P
-P                                                                            P
-P                                                                            P
-P                                                                            P
-P  S                      C                    C                       G    P
-PPPPPPPPPPPPPPPPPPPP    PPPPPPPPPPPPPPP     PPPPPPPPPPPPPPP      PPPPPPPPPPPPPP
-P                   KKKK              KKKKKKK              KKKKKKK            P
-P                   KKKK              KKKKKKK              KKKKKKK            P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─── LEVEL 1 ─── "First Steps"  (width 60)
+// Gaps: 4, 5, 6 — learn that more runway = more distance
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                          P
+P                                                          P
+P  S                                                    G  P
+PPPPPPPPPPPPPPPP    PPPPPPPPPPP     PPPPPPPPPP      PPPPPPPP
+PPPPPPPPPPPPPPPPKKKKPPPPPPPPPPPKKKKKPPPPPPPPPPKKKKKKPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-// ─────────────────────────────────────────────────────────────────
-// LEVEL 2 — "Speed Alley"
-// Longer runways. Gaps grow to need real momentum.
-// Hold space and run — don't stop!
-// Gaps: 5, 7, 9, 7, 5 tiles
-// ─────────────────────────────────────────────────────────────────
-`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                                        P
-P                                                                                        P
-P                                                                                        P
-P                                                                                        P
-P  S                     C                      C                    C              G   P
-PPPPPPPPPPPPPPPPPPPP    PPPPPPPPPPPPPPP      PPPPPPPPPPPPPP      PPPPPPPPP   PPPPPPPPPPPPP
-P                   KKKKK              KKKKKKK              KKKKKKK       KKK            P
-P                   KKKKK              KKKKKKK              KKKKKKK       KKK            P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─── LEVEL 2 ─── "Gathering Speed"  (width 80)
+// Gaps: 5, 7, 10 — hold right, hold space, keep going
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                              P
+P                                                                              P
+P  S                                                                        G  P
+PPPPPPPPPPPPPPPPPPPP     PPPPPPPPPPPPPP       PPPPPPPPPPPPP          PPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPKKKKKPPPPPPPPPPPPPPKKKKKKKPPPPPPPPPPPPPKKKKKKKKKKPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-// ─────────────────────────────────────────────────────────────────
-// LEVEL 3 — "Canyon Run"
-// Two-tier level. Drop down to the lower floor to build speed.
-// Upper platforms give shortcuts but lower path has momentum.
-// Gaps: 7, 10, 12, 9 tiles — need real speed to clear the big ones
-// ─────────────────────────────────────────────────────────────────
-`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
-P                                                                                              P
-P                                                                                              P
-P                                                          PPPP      PPPPPPP                   P
-P                 PPPPPPPPPP            PPPPPPPPP                               G              P
-P  S                                                                         PPPPPPPPPPPPPPPPPP
-P  PPPPPPPPPPPPPP           PPPPPPPPPP           PPPPPPPPPP          PPPPPPP                   P
-P                KKKKKKKKKKK          KKKKKKKKKKKK          KKKKKKKKKK       KKKK              P
-P                KKKKKKKKKKK          KKKKKKKKKKKK          KKKKKKKKKK       KKKK              P
-P                KKKKKKKKKKK          KKKKKKKKKKKK          KKKKKKKKKK       KKKK              P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+// ─── LEVEL 3 ─── "River Run"  (width 95)
+// Gaps: 6, 9, 12 — the last gap needs real speed
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+P                                                                                             P
+P                                                                                             P
+P  S                                                                                       G  P
+PPPPPPPPPPPPPPPPPPPPPPPP      PPPPPPPPPPPPPPPP         PPPPPPPPPPPPPPP            PPPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPKKKKKKLPPPPPPPPPPPPPPPKKKKKKKKKPPPPPPPPPPPPPPPKKKKKKKKKKKKPPPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-// ─────────────────────────────────────────────────────────────────
-// LEVEL 4 — "The Long Haul"
-// No checkpoints for first half — maintain momentum or fall.
-// Gaps: 8, 11, 14, 11, 8 tiles — the 14-tile gap needs near-max speed
-// Two floors: top for slow path (narrow platforms), bottom for speed path
-// ─────────────────────────────────────────────────────────────────
-`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+// ─── LEVEL 4 ─── "Overdrive"  (width 110)
+// Gaps: 8, 11, 14 — the 14-tile gap demands a full runway, no hesitation
+`PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 P                                                                                                             P
 P                                                                                                             P
-P         PPPP          PPPP            PPPP              PPPP          PPPP          PPPP                    P
-P                                                                                                             P
-P  S                C                           C                                              C       G      P
-P  PPPPPPPPPPPPPP       PPPPPPPPPPPPPPP                 PPPPPPPPPPPPPP       PPPPPPPPPPPPP      PPPPPPPPPPPPPPPP
-P                KKKKKKKKK             KKKKKKKKKKKKKKKKKK             KKKKKKKKK            KKKKKK              P
-P                KKKKKKKKK             KKKKKKKKKKKKKKKKKK             KKKKKKKKK            KKKKKK              P
-P                KKKKKKKKK             KKKKKKKKKKKKKKKKKK             KKKKKKKKK            KKKKKK              P
-PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
+P  S                                                                                                       G  P
+PPPPPPPPPPPPPPPPPPPPPPPPPPP        PPPPPPPPPPPPPPPPPP           PPPPPPPPPPPPPPPPP              PPPPPPPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPKKKKKKKKPPPPPPPPPPPPPPPPPPKKKKKKKKKKKPPPPPPPPPPPPPPPPPKKKKKKKKKKKKKKPPPPPPPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-// ─────────────────────────────────────────────────────────────────
-// LEVEL 5 — "Hyperdrive"
-// Long runways and massive gaps. You need to be at near-max speed.
-// The 16-tile gap is only crossable at high speed. Don't slow down!
-// Gaps: 10, 13, 16, 13, 10 tiles
-// ─────────────────────────────────────────────────────────────────
+// ─── LEVEL 5 ─── "Hyperlane"  (width 130)
+// Gaps: 9, 13, 17 — the 17-tile gap is almost impossible without max speed
 `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 P                                                                                                                             P
 P                                                                                                                             P
-P                                          PPPP                PPPP                                                           P
-P              PPPPP               PPPP                                  PPPP             PPPP              PPPP              P
-P  S                      C                           C                                                              G        P
-P  PPPPPPPPPPPPPPPPPPP         PPPPPPPPPPPPPPPPPP              PPPPPPPPPPPPPPPPPPP           PPPPPPPPPPPPPPP          PPPPPPPP
-P                    KKKKKKKKKKKK                KKKKKKKKKKKKKKKK                 KKKKKKKKKKKK             KKKKKKKKKKKK       P
-P                    KKKKKKKKKKKK                KKKKKKKKKKKKKKKK                 KKKKKKKKKKKK             KKKKKKKKKKKK       P
-P                    KKKKKKKKKKKK                KKKKKKKKKKKKKKKK                 KKKKKKKKKKKK             KKKKKKKKKKKK       P
+P  S                                                                                                                       G  P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP         PPPPPPPPPPPPPPPPPPPPPP             PPPPPPPPPPPPPPPPPPPPP                 PPPPPPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPKKKKKKKKKPPPPPPPPPPPPPPPPPPPPPPKKKKKKKKKKKKKPPPPPPPPPPPPPPPPPPPPPKKKKKKKKKKKKKKKKKPPPPPPPPPPPPPPPP
 PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 
-// ─────────────────────────────────────────────────────────────────
-// LEVEL 6 — "Grand Prix"
-// The ultimate speed run. Hold right, hold space, never stop.
-// Gaps: 12, 15, 18, 15, 12 — the 18-tile gap REQUIRES max speed.
-// Speed bonus: faster you run, higher you jump. Max speed = win.
-// ─────────────────────────────────────────────────────────────────
+// ─── LEVEL 6 ─── "Grand Prix"  (width 150)
+// Gaps: 12, 16, 18 — the 18-tile center gap is only crossable at absolute max speed
+// Hold right from the very start and never let go
 `PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 P                                                                                                                                                     P
 P                                                                                                                                                     P
-P                                                    PPPP                   PPPP                    PPPP                                              P
-P               PPPP             PPPP                                                                           PPPP              PPPP                P
-P  S                        C                                  C                                                           C                   G      P
-P  PPPPPPPPPPPPPPPPPPP         PPPPPPPPPPPPPPPPPPPP                  PPPPPPPPPPPPPPPPPPPPPP             PPPPPPPPPPPPPPPPPP          PPPPPPPPPPPPPPPPPPP
-P                    KKKKKKKKKKKKK                  KKKKKKKKKKKKKKKKKKK                   KKKKKKKKKKKKKKKK               KKKKKKKKKKKKK                P
-P                    KKKKKKKKKKKKK                  KKKKKKKKKKKKKKKKKKK                   KKKKKKKKKKKKKKKK               KKKKKKKKKKKKK                P
-P                    KKKKKKKKKKKKK                  KKKKKKKKKKKKKKKKKKK                   KKKKKKKKKKKKKKKK               KKKKKKKKKKKKK                P
+P  S                                                                                                                                               G  P
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP            PPPPPPPPPPPPPPPPPPPPPPPPPP                PPPPPPPPPPPPPPPPPPPPPPPP                  PPPPPPPPPPPPPPPPPPPPPPPPPP
+PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPKKKKKKKKKKKKPPPPPPPPPPPPPPPPPPPPPPPPPPKKKKKKKKKKKKKKKKPPPPPPPPPPPPPPPPPPPPPPPPKKKKKKKKKKKKKKKKKKPPPPPPPPPPPPPPPPPPPPPPPPPP
 PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP`,
 ];

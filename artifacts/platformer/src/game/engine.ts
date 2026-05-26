@@ -126,11 +126,10 @@ export function updateParticles(particles: Particle[]) {
 export function updatePlayer(
   state: GameState,
   input: { left: boolean; right: boolean; jumpHeld: boolean }
-): { died: boolean; reachedGoal: boolean; hitCheckpoint: string | null } {
+): { died: boolean; reachedGoal: boolean } {
   const { player, levelData } = state;
   let died = false;
   let reachedGoal = false;
-  let hitCheckpoint: string | null = null;
 
   if (input.left) {
     player.vx -= ACCELERATION;
@@ -148,6 +147,7 @@ export function updatePlayer(
   player.vy += GRAVITY;
   if (player.vy > MAX_FALL_SPEED) player.vy = MAX_FALL_SPEED;
 
+  // Hold-to-jump: keep buffer full while space is held
   if (input.jumpHeld) {
     player.jumpBufferFrames = 12;
   } else if (player.jumpBufferFrames > 0) {
@@ -156,6 +156,7 @@ export function updatePlayer(
 
   const canJump = player.onGround || player.coyoteFrames > 0;
   if (player.jumpBufferFrames > 0 && canJump) {
+    // Small bonus to jump height at high speed
     const speedBonus = Math.min(Math.abs(player.vx) * 0.04, 1.2);
     player.vy = JUMP_FORCE - speedBonus;
     player.jumpBufferFrames = 0;
@@ -205,57 +206,34 @@ export function updatePlayer(
     player.coyoteFrames--;
   }
 
+  // Tile interaction checks
   const margin = 2;
   const left = Math.floor((player.x + margin) / TILE_SIZE);
   const right = Math.floor((player.x + player.width - margin) / TILE_SIZE);
   const top = Math.floor((player.y + margin) / TILE_SIZE);
   const bottom = Math.floor((player.y + player.height - margin) / TILE_SIZE);
 
-  const tilesToCheck: [number, number][] = [];
-  for (let r = top; r <= bottom; r++) {
+  outer: for (let r = top; r <= bottom; r++) {
     for (let c = left; c <= right; c++) {
-      tilesToCheck.push([c, r]);
+      const t = getTile(levelData, c, r);
+      if (isHazard(t)) { died = true; break outer; }
+      if (t === "G") reachedGoal = true;
     }
   }
 
-  for (const [c, r] of tilesToCheck) {
-    const t = getTile(levelData, c, r);
-    if (isHazard(t)) {
-      died = true;
-      break;
-    }
-    if (t === "G") {
-      reachedGoal = true;
-    }
-    if (t === "C") {
-      hitCheckpoint = `${c},${r}`;
-    }
-  }
-
-  if (player.x < 0) {
-    player.x = 0;
-    player.vx = 0;
-  }
+  // World bounds
+  if (player.x < 0) { player.x = 0; player.vx = 0; }
   if (player.x + player.width > levelData.width) {
     player.x = levelData.width - player.width;
     player.vx = 0;
   }
-  if (player.y < 0) {
-    player.y = 0;
-    player.vy = 0;
-  }
-  if (player.y > levelData.height + 200) {
-    died = true;
-  }
+  if (player.y < 0) { player.y = 0; player.vy = 0; }
+  if (player.y > levelData.height + 200) died = true;
 
-  return { died, reachedGoal, hitCheckpoint };
+  return { died, reachedGoal };
 }
 
-function resolveAxis(
-  player: Player,
-  level: LevelData,
-  axis: "x" | "y"
-): boolean {
+function resolveAxis(player: Player, level: LevelData, axis: "x" | "y"): boolean {
   let landed = false;
   const left = Math.floor(player.x / TILE_SIZE);
   const right = Math.floor((player.x + player.width - 0.01) / TILE_SIZE);
@@ -277,22 +255,11 @@ function resolveAxis(
       const overlapT = player.y + player.height - tileT;
       const overlapB = tileB - player.y;
 
-      if (
-        overlapL <= 0 ||
-        overlapR <= 0 ||
-        overlapT <= 0 ||
-        overlapB <= 0
-      )
-        continue;
+      if (overlapL <= 0 || overlapR <= 0 || overlapT <= 0 || overlapB <= 0) continue;
 
       if (axis === "x") {
-        if (overlapL < overlapR) {
-          player.x = tileL - player.width;
-          player.vx = 0;
-        } else {
-          player.x = tileR;
-          player.vx = 0;
-        }
+        if (overlapL < overlapR) { player.x = tileL - player.width; player.vx = 0; }
+        else { player.x = tileR; player.vx = 0; }
       } else {
         if (overlapT < overlapB) {
           player.y = tileT - player.height;
@@ -306,7 +273,6 @@ function resolveAxis(
       }
     }
   }
-
   return landed;
 }
 
@@ -318,14 +284,14 @@ export function updateCamera(state: GameState, canvasW: number, canvasH: number)
   const targetX = player.x + player.width / 2 + lookAhead - canvasW / 2;
   const targetY = player.y + player.height / 2 - canvasH * 0.45;
 
-  const maxX = state.levelData.width - canvasW;
-  const maxY = state.levelData.height - canvasH;
+  const maxX = Math.max(0, state.levelData.width - canvasW);
+  const maxY = Math.max(0, state.levelData.height - canvasH);
 
   const clampedX = Math.max(0, Math.min(maxX, targetX));
   const clampedY = Math.max(0, Math.min(maxY, targetY));
 
-  const lerpSpeed = 0.12 + speed * 0.005;
-  camera.x += (clampedX - camera.x) * Math.min(lerpSpeed, 0.2);
+  const lerpSpeed = Math.min(0.12 + speed * 0.005, 0.22);
+  camera.x += (clampedX - camera.x) * lerpSpeed;
   camera.y += (clampedY - camera.y) * 0.1;
 }
 
@@ -335,14 +301,8 @@ export function initGameState(levelIndex: number): GameState {
   return {
     level: levelIndex,
     player,
-    camera: {
-      x: player.x - 120,
-      y: player.y - 300,
-    },
+    camera: { x: player.x - 120, y: player.y - 300 },
     levelData,
-    checkpointX: player.x,
-    checkpointY: player.y,
-    visitedCheckpoints: new Set(),
     deathFlash: 0,
     goalReached: false,
     goalFlash: 0,
@@ -356,9 +316,9 @@ export function initGameState(levelIndex: number): GameState {
   };
 }
 
-export function resetToCheckpoint(state: GameState) {
-  state.player.x = state.checkpointX;
-  state.player.y = state.checkpointY;
+export function resetPlayer(state: GameState, x: number, y: number) {
+  state.player.x = x;
+  state.player.y = y;
   state.player.vx = 0;
   state.player.vy = 0;
   state.player.onGround = false;

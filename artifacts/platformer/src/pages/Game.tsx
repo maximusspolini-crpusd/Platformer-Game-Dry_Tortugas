@@ -5,16 +5,18 @@ import {
   updateCamera,
   updateParticles,
   spawnParticles,
-  resetToCheckpoint,
+  resetPlayer,
   TOTAL_LEVELS,
-  parseLevel,
-  createPlayer,
 } from "../game/engine";
 import { render } from "../game/renderer";
-import { GameState } from "../game/types";
+import { GameState, GhostFrame } from "../game/types";
 
 const CANVAS_W = 900;
 const CANVAS_H = 560;
+
+// Ghost storage — persists across level transitions within the session
+// Key: level index → fastest run frames
+const levelGhosts: Record<number, GhostFrame[]> = {};
 
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,20 +25,37 @@ export default function Game() {
   const rafRef = useRef<number>(0);
   const timeRef = useRef(0);
 
-  const resetGame = useCallback((levelIndex = 0) => {
-    stateRef.current = initGameState(levelIndex);
-  }, []);
+  // Ghost recording state
+  const recordingRef = useRef<GhostFrame[]>([]);
+  const ghostFrameIdxRef = useRef(0);
+  // Spawn position for current level (used on death restart)
+  const spawnRef = useRef({ x: stateRef.current.player.x, y: stateRef.current.player.y });
+
+  const startLevel = useCallback(
+    (levelIndex: number, preserveDeaths = false, preserveTime = false) => {
+      const prev = stateRef.current;
+      const next = initGameState(levelIndex);
+      if (preserveDeaths) next.deaths = prev.deaths;
+      if (preserveTime) next.time = prev.time;
+      stateRef.current = next;
+      spawnRef.current = { x: next.player.x, y: next.player.y };
+      recordingRef.current = [];
+      ghostFrameIdxRef.current = 0;
+    },
+    []
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.type === "keydown") {
         keysRef.current.add(e.code);
+
         if (e.code === "KeyR") {
           const s = stateRef.current;
           if (s.won) {
-            resetGame(0);
+            startLevel(0);
           } else {
-            stateRef.current = initGameState(s.level);
+            startLevel(s.level);
           }
         }
         if (e.code === "Tab") {
@@ -61,7 +80,7 @@ export default function Game() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKey);
     };
-  }, [resetGame]);
+  }, [startLevel]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -73,21 +92,30 @@ export default function Game() {
       timeRef.current++;
       const state = stateRef.current;
 
-      if (state.won) {
-        render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current);
-        rafRef.current = requestAnimationFrame(loop);
-        return;
-      }
+      // Determine ghost frame for this render
+      const ghost = levelGhosts[state.level] ?? null;
+      const ghostIdx = ghostFrameIdxRef.current;
+      const ghostFrame: GhostFrame | null = ghost
+        ? ghost[Math.min(ghostIdx, ghost.length - 1)]
+        : null;
 
-      if (state.showControls) {
-        render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current);
+      // Ghost comparison: are we ahead or behind?
+      const ghostIsWinning = ghost
+        ? ghostIdx < ghost.length - 1
+        : false;
+
+      if (state.won || state.showControls) {
+        render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current, ghostFrame, !!ghost, ghostIsWinning);
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
 
       state.time++;
 
-      if (state.deathFlash > 0) state.deathFlash -= 0.04;
+      // Fade flashes
+      if (state.deathFlash > 0) state.deathFlash -= 0.05;
+
+      // Goal transition
       if (state.goalFlash > 0) {
         state.goalFlash -= 0.025;
         if (state.goalFlash <= 0) {
@@ -95,16 +123,16 @@ export default function Game() {
           if (nextLevel >= TOTAL_LEVELS) {
             state.won = true;
           } else {
-            stateRef.current = {
-              ...initGameState(nextLevel),
-              deaths: state.deaths,
-              time: state.time,
-            };
+            startLevel(nextLevel, true, true);
           }
-          render(ctx, stateRef.current, CANVAS_W, CANVAS_H, timeRef.current);
+          render(ctx, stateRef.current, CANVAS_W, CANVAS_H, timeRef.current, null, false, false);
           rafRef.current = requestAnimationFrame(loop);
           return;
         }
+        // During flash, still render but skip physics
+        render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current, null, !!ghost, ghostIsWinning);
+        rafRef.current = requestAnimationFrame(loop);
+        return;
       }
 
       const keys = keysRef.current;
@@ -117,59 +145,70 @@ export default function Game() {
 
       updateParticles(state.particles);
 
-      if (state.goalFlash <= 0) {
-        const result = updatePlayer(state, { left, right, jumpHeld });
+      const result = updatePlayer(state, { left, right, jumpHeld });
 
-        if (result.died) {
-          spawnParticles(
-            state.particles,
-            state.player.x + state.player.width / 2,
-            state.player.y + state.player.height / 2,
-            "#32c896",
-            16,
-            5
-          );
-          resetToCheckpoint(state);
+      // Record player position every frame (sample every 2 frames for efficiency)
+      if (timeRef.current % 2 === 0) {
+        recordingRef.current.push({
+          x: state.player.x,
+          y: state.player.y,
+          facing: state.player.facing,
+        });
+      }
+      ghostFrameIdxRef.current++;
+
+      if (result.died) {
+        spawnParticles(
+          state.particles,
+          state.player.x + state.player.width / 2,
+          state.player.y + state.player.height / 2,
+          "#32c896",
+          16,
+          5
+        );
+        resetPlayer(state, spawnRef.current.x, spawnRef.current.y);
+        // Reset recording and ghost playback on death
+        recordingRef.current = [];
+        ghostFrameIdxRef.current = 0;
+      }
+
+      if (result.reachedGoal && state.goalFlash <= 0) {
+        state.goalFlash = 1;
+
+        // Save ghost if this run was faster
+        const prevGhost = levelGhosts[state.level];
+        const recLen = recordingRef.current.length;
+        if (!prevGhost || recLen < prevGhost.length) {
+          levelGhosts[state.level] = [...recordingRef.current];
         }
 
-        if (result.hitCheckpoint) {
-          if (!state.visitedCheckpoints.has(result.hitCheckpoint)) {
-            state.visitedCheckpoints.add(result.hitCheckpoint);
-            const [col, row] = result.hitCheckpoint.split(",").map(Number);
-            state.checkpointX = col * 32 + (32 - state.player.width) / 2;
-            state.checkpointY = row * 32 - state.player.height;
-            spawnParticles(
-              state.particles,
-              state.player.x + state.player.width / 2,
-              state.player.y + state.player.height / 2,
-              "#ffd740",
-              10,
-              3
-            );
-          }
-        }
-
-        if (result.reachedGoal && state.goalFlash <= 0) {
-          state.goalFlash = 1;
-          spawnParticles(
-            state.particles,
-            state.player.x + state.player.width / 2,
-            state.player.y + state.player.height / 2,
-            "#40ff70",
-            20,
-            6
-          );
-        }
+        spawnParticles(
+          state.particles,
+          state.player.x + state.player.width / 2,
+          state.player.y + state.player.height / 2,
+          "#40ff70",
+          24,
+          6
+        );
       }
 
       updateCamera(state, CANVAS_W, CANVAS_H);
-      render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current);
+      render(
+        ctx,
+        state,
+        CANVAS_W,
+        CANVAS_H,
+        timeRef.current,
+        ghostFrame,
+        !!ghost,
+        ghostIsWinning
+      );
       rafRef.current = requestAnimationFrame(loop);
     };
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+  }, [startLevel]);
 
   return (
     <div
@@ -189,8 +228,8 @@ export default function Game() {
         style={{
           position: "relative",
           boxShadow:
-            "0 0 40px rgba(50,200,150,0.15), 0 0 80px rgba(0,0,0,0.8)",
-          border: "1px solid rgba(100,100,160,0.3)",
+            "0 0 40px rgba(50,200,150,0.12), 0 0 80px rgba(0,0,0,0.8)",
+          border: "1px solid rgba(100,100,160,0.25)",
         }}
       >
         <canvas
@@ -201,7 +240,6 @@ export default function Game() {
             display: "block",
             maxWidth: "100vw",
             maxHeight: "calc(100vh - 20px)",
-            imageRendering: "pixelated",
           }}
           tabIndex={0}
           onClick={(e) => (e.target as HTMLCanvasElement).focus()}
@@ -234,24 +272,11 @@ function MobileControls({
       }}
     >
       <div style={{ display: "flex", gap: 8, pointerEvents: "all" }}>
-        <Btn
-          label="◄"
-          onDown={() => press("ArrowLeft")}
-          onUp={() => release("ArrowLeft")}
-        />
-        <Btn
-          label="►"
-          onDown={() => press("ArrowRight")}
-          onUp={() => release("ArrowRight")}
-        />
+        <Btn label="◄" onDown={() => press("ArrowLeft")} onUp={() => release("ArrowLeft")} />
+        <Btn label="►" onDown={() => press("ArrowRight")} onUp={() => release("ArrowRight")} />
       </div>
       <div style={{ pointerEvents: "all" }}>
-        <Btn
-          label="JUMP"
-          onDown={() => press("Space")}
-          onUp={() => release("Space")}
-          wide
-        />
+        <Btn label="JUMP" onDown={() => press("Space")} onUp={() => release("Space")} wide />
       </div>
     </div>
   );
@@ -270,18 +295,12 @@ function Btn({
 }) {
   return (
     <button
-      onPointerDown={(e) => {
-        e.preventDefault();
-        onDown();
-      }}
-      onPointerUp={(e) => {
-        e.preventDefault();
-        onUp();
-      }}
+      onPointerDown={(e) => { e.preventDefault(); onDown(); }}
+      onPointerUp={(e) => { e.preventDefault(); onUp(); }}
       onPointerLeave={onUp}
       style={{
-        background: "rgba(50,200,150,0.15)",
-        border: "1px solid rgba(50,200,150,0.4)",
+        background: "rgba(50,200,150,0.12)",
+        border: "1px solid rgba(50,200,150,0.35)",
         color: "#32c896",
         borderRadius: 6,
         padding: wide ? "10px 20px" : "10px 16px",

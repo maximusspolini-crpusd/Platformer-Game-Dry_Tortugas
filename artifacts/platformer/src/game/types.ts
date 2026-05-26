@@ -41,14 +41,17 @@ export interface LevelData {
   height: number;
 }
 
+export interface GhostFrame {
+  x: number;
+  y: number;
+  facing: 1 | -1;
+}
+
 export interface GameState {
   level: number;
   player: Player;
   camera: Camera;
   levelData: LevelData;
-  checkpointX: number;
-  checkpointY: number;
-  visitedCheckpoints: Set<string>;
   deathFlash: number;
   goalReached: boolean;
   goalFlash: number;
