@@ -137,14 +137,15 @@ function drawHUD(
   ctx: CanvasRenderingContext2D,
   state: GameState,
   canvasW: number,
-  canvasH: number
+  canvasH: number,
+  levelLabel: string
 ) {
   ctx.font = "bold 14px 'Courier New', monospace";
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(0,0,0,0.55)";
-  ctx.fillRect(8, 8, 220, 26);
+  ctx.fillRect(8, 8, 260, 26);
   ctx.fillStyle = COLORS.text;
-  ctx.fillText(`LEVEL ${state.level + 1}   DEATHS: ${state.deaths}`, 14, 26);
+  ctx.fillText(`${levelLabel}   DEATHS: ${state.deaths}`, 14, 26);
 
   ctx.textAlign = "right";
   ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -248,7 +249,8 @@ export function render(
   state: GameState,
   canvasW: number,
   canvasH: number,
-  time: number
+  time: number,
+  levelLabel = `LEVEL ${state.level + 1}`
 ) {
   const grd = ctx.createLinearGradient(0, 0, 0, canvasH);
   grd.addColorStop(0, COLORS.bg);
@@ -289,7 +291,7 @@ export function render(
     ctx.fillRect(0, 0, canvasW, canvasH);
   }
 
-  drawHUD(ctx, state, canvasW, canvasH);
+  drawHUD(ctx, state, canvasW, canvasH, levelLabel);
 
   if (state.showControls) {
     drawControlsOverlay(ctx, canvasW, canvasH);
