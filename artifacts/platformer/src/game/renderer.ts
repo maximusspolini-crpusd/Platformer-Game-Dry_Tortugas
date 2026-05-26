@@ -11,6 +11,7 @@ const COLORS = {
   hazardGlow: "#ff6030",
   hazardDark: "#aa1010",
   goal: "#40ff70",
+  goalDim: "#1a6632",
   player: "#32c896",
   playerDark: "#1a8060",
   playerHighlight: "#60ffcc",
@@ -28,6 +29,7 @@ function drawTile(
   row: number
 ) {
   const ts = TILE_SIZE;
+
   if (type === "P" || type === "L") {
     ctx.fillStyle = COLORS.platform;
     ctx.fillRect(x, y, ts, ts);
@@ -38,6 +40,7 @@ function drawTile(
     ctx.strokeStyle = "rgba(0,0,0,0.3)";
     ctx.lineWidth = 0.5;
     ctx.strokeRect(x + 0.5, y + 0.5, ts - 1, ts - 1);
+
   } else if (type === "K" || type === "k") {
     const pulse = Math.sin(time * 0.08 + col * 0.5) * 0.15 + 0.85;
     ctx.fillStyle = COLORS.hazardDark;
@@ -51,17 +54,36 @@ function drawTile(
     grd.addColorStop(1, `rgba(200,20,20,0)`);
     ctx.fillStyle = grd;
     ctx.fillRect(x, y, ts, ts);
+
   } else if (type === "G") {
-    const pulse = Math.sin(time * 0.07 + row * 0.3) * 0.25 + 0.75;
-    ctx.fillStyle = `rgba(64, 255, 112, ${pulse * 0.3})`;
-    ctx.fillRect(x - 4, y - 4, ts + 8, ts + 8);
-    ctx.fillStyle = `rgba(64, 255, 112, ${pulse * 0.7})`;
-    ctx.fillRect(x + 2, y + 2, ts - 4, ts - 4);
+    // Goal wall — glowing green finish blocks
+    const wave = Math.sin(time * 0.06 + row * 0.4) * 0.2 + 0.8;
+    const flicker = Math.sin(time * 0.13 + col * 1.7) * 0.1 + 0.9;
+    const alpha = wave * flicker;
+
+    // Dark base
+    ctx.fillStyle = COLORS.goalDim;
+    ctx.fillRect(x, y, ts, ts);
+
+    // Bright overlay
+    ctx.fillStyle = `rgba(64, 255, 112, ${alpha * 0.55})`;
+    ctx.fillRect(x, y, ts, ts);
+
+    // Inner highlight
+    ctx.fillStyle = `rgba(180, 255, 210, ${alpha * 0.35})`;
+    ctx.fillRect(x + 3, y + 3, ts - 6, ts - 6);
+
+    // Glow
     ctx.shadowColor = COLORS.goal;
-    ctx.shadowBlur = 12 * pulse;
-    ctx.fillStyle = COLORS.goal;
-    ctx.fillRect(x + 4, y + 4, ts - 8, ts - 8);
+    ctx.shadowBlur = 14 * alpha;
+    ctx.fillStyle = `rgba(64, 255, 112, ${alpha * 0.25})`;
+    ctx.fillRect(x, y, ts, ts);
     ctx.shadowBlur = 0;
+
+    // Grid lines so it looks like individual blocks in the wall
+    ctx.strokeStyle = `rgba(0, 80, 30, 0.5)`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, ts - 1, ts - 1);
   }
 }
 
@@ -71,23 +93,20 @@ export function drawGhostAt(
   playerW: number,
   playerH: number
 ) {
-  const cx = frame.x + playerW / 2;
-  const cy = frame.y + playerH / 2;
-
   ctx.globalAlpha = 0.35;
   ctx.fillStyle = "#88ddff";
   ctx.fillRect(frame.x + 2, frame.y + 2, playerW, playerH);
   ctx.fillStyle = "#aaeeff";
   ctx.fillRect(frame.x, frame.y, playerW, playerH);
 
-  // ghost eye
-  const eyeX = frame.facing === 1 ? frame.x + playerW * 0.65 : frame.x + playerW * 0.15;
+  const eyeX =
+    frame.facing === 1
+      ? frame.x + playerW * 0.65
+      : frame.x + playerW * 0.15;
   ctx.fillStyle = "rgba(0,0,60,0.7)";
   ctx.fillRect(eyeX, frame.y + playerH * 0.25, 4, 4);
 
   ctx.globalAlpha = 1;
-  void cx;
-  void cy;
 }
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
@@ -126,6 +145,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
 
   ctx.shadowBlur = 0;
 
+  // Ground trail at speed
   const speed = Math.abs(player.vx);
   if (speed > 1 && player.onGround) {
     const trailAlpha = Math.min(speed / 12, 0.45);
@@ -138,7 +158,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
     );
   }
 
-  // speed lines in air at high speed
+  // Air speed lines
   if (speed > 8 && !player.onGround) {
     const dir = player.facing;
     ctx.strokeStyle = `rgba(100,220,255,${Math.min((speed - 8) / 10, 0.5)})`;
@@ -171,13 +191,13 @@ function drawHUD(
   hasGhost: boolean,
   ghostIsWinning: boolean
 ) {
-  // Level + deaths
+  // Level + deaths (no "/N" total since levels are endless)
   ctx.font = "bold 14px 'Courier New', monospace";
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(0,0,0,0.55)";
-  ctx.fillRect(8, 8, 210, 26);
+  ctx.fillRect(8, 8, 220, 26);
   ctx.fillStyle = COLORS.text;
-  ctx.fillText(`LEVEL ${state.level + 1}/6   DEATHS: ${state.deaths}`, 14, 26);
+  ctx.fillText(`LEVEL ${state.level + 1}   DEATHS: ${state.deaths}`, 14, 26);
 
   // Timer
   ctx.textAlign = "right";
@@ -185,7 +205,7 @@ function drawHUD(
   ctx.fillRect(canvasW - 140, 8, 132, 26);
   const totalFrames = state.time;
   const secs = Math.floor(totalFrames / 60);
-  const ms = Math.floor((totalFrames % 60) * (1000 / 60) / 10);
+  const ms = Math.floor(((totalFrames % 60) * (1000 / 60)) / 10);
   const mins = Math.floor(secs / 60);
   const ss = secs % 60;
   ctx.fillStyle = COLORS.textDim;
@@ -195,7 +215,7 @@ function drawHUD(
     26
   );
 
-  // Speed meter (centered)
+  // Speed meter
   const speed = Math.abs(state.player.vx);
   const maxDisplay = 14;
   const pct = Math.min(speed / maxDisplay, 1);
@@ -237,7 +257,28 @@ function drawHUD(
     ctx.textAlign = "left";
     ctx.font = "11px 'Courier New', monospace";
     ctx.fillStyle = ghostIsWinning ? "#88ddff" : "#ff8866";
-    ctx.fillText(ghostIsWinning ? "▶ AHEAD OF GHOST" : "◀ BEHIND GHOST", 14, 48);
+    ctx.fillText(
+      ghostIsWinning ? "▶ AHEAD OF GHOST" : "◀ BEHIND GHOST",
+      14,
+      48
+    );
+  }
+
+  // Goal flash overlay text
+  if (state.goalFlash > 0) {
+    const alpha = Math.min(state.goalFlash * 2, 1);
+    ctx.globalAlpha = alpha;
+    ctx.font = "bold 36px 'Courier New', monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = COLORS.goal;
+    ctx.shadowColor = COLORS.goal;
+    ctx.shadowBlur = 20;
+    ctx.fillText("LEVEL CLEAR!", canvasW / 2, canvasH / 2 - 20);
+    ctx.font = "16px 'Courier New', monospace";
+    ctx.fillStyle = COLORS.text;
+    ctx.shadowBlur = 0;
+    ctx.fillText(`Deaths: ${state.deaths}`, canvasW / 2, canvasH / 2 + 16);
+    ctx.globalAlpha = 1;
   }
 
   // Controls hint
@@ -245,7 +286,7 @@ function drawHUD(
   ctx.fillStyle = COLORS.textDim;
   ctx.font = "11px 'Courier New', monospace";
   ctx.fillText(
-    "[A/D] Move  [Hold Space] Jump  [R] Restart",
+    "[A/D] Move  [Hold Space] Jump  [R] New Layout",
     canvasW / 2,
     canvasH - 10
   );
@@ -258,7 +299,9 @@ function drawFlash(
   canvasW: number,
   canvasH: number
 ) {
-  ctx.fillStyle = color.replace(")", `, ${alpha * 0.5})`).replace("rgb", "rgba");
+  ctx.fillStyle = color
+    .replace(")", `, ${alpha * 0.5})`)
+    .replace("rgb", "rgba");
   ctx.fillRect(0, 0, canvasW, canvasH);
 }
 
@@ -278,8 +321,8 @@ function drawControlsOverlay(
   const lines = [
     "A / ← Arrow      — Move Left",
     "D / → Arrow      — Move Right",
-    "Hold Space / ↑   — Jump (hold to auto-bounce on land)",
-    "R                — Restart Level",
+    "Hold Space / ↑   — Jump (hold to auto-bounce)",
+    "R                — New random layout",
   ];
   ctx.font = "15px 'Courier New', monospace";
   ctx.fillStyle = COLORS.textDim;
@@ -298,43 +341,6 @@ function drawControlsOverlay(
   ctx.fillText("Press Tab to close", canvasW / 2, canvasH / 2 + 116);
 }
 
-function drawWinScreen(
-  ctx: CanvasRenderingContext2D,
-  state: GameState,
-  canvasW: number,
-  canvasH: number,
-  time: number
-) {
-  ctx.fillStyle = "rgba(0,0,0,0.72)";
-  ctx.fillRect(0, 0, canvasW, canvasH);
-
-  const pulse = Math.sin(time * 0.05) * 0.15 + 0.85;
-  ctx.shadowColor = COLORS.goal;
-  ctx.shadowBlur = 30 * pulse;
-  ctx.fillStyle = COLORS.goal;
-  ctx.font = "bold 52px 'Courier New', monospace";
-  ctx.textAlign = "center";
-  ctx.fillText("YOU WIN!", canvasW / 2, canvasH / 2 - 50);
-  ctx.shadowBlur = 0;
-
-  const totalFrames = state.time;
-  const secs = Math.floor(totalFrames / 60);
-  const ms = Math.floor((totalFrames % 60) * (1000 / 60) / 10);
-  const mins = Math.floor(secs / 60);
-  const ss = secs % 60;
-
-  ctx.fillStyle = COLORS.textDim;
-  ctx.font = "18px 'Courier New', monospace";
-  ctx.fillText(
-    `Deaths: ${state.deaths}   Time: ${String(mins).padStart(2, "0")}:${String(ss).padStart(2, "0")}.${ms}`,
-    canvasW / 2,
-    canvasH / 2 + 16
-  );
-  ctx.fillStyle = COLORS.text;
-  ctx.font = "14px 'Courier New', monospace";
-  ctx.fillText("Press R to play again", canvasW / 2, canvasH / 2 + 56);
-}
-
 export function render(
   ctx: CanvasRenderingContext2D,
   state: GameState,
@@ -345,6 +351,7 @@ export function render(
   hasGhost: boolean,
   ghostIsWinning: boolean
 ) {
+  // Background
   const grd = ctx.createLinearGradient(0, 0, 0, canvasH);
   grd.addColorStop(0, COLORS.bg);
   grd.addColorStop(1, COLORS.bgGrad2);
@@ -371,37 +378,25 @@ export function render(
     }
   }
 
-  // Ghost
-  if (ghostFrame && !state.won) {
+  if (ghostFrame) {
     drawGhostAt(ctx, ghostFrame, state.player.width, state.player.height);
   }
 
   drawParticles(ctx, state.particles);
-
-  if (!state.won) {
-    drawPlayer(ctx, state);
-  }
+  drawPlayer(ctx, state);
 
   ctx.restore();
 
   if (state.deathFlash > 0) {
-    ctx.fillStyle = `rgba(255, 30, 30, ${state.deathFlash * 0.45})`;
-    ctx.fillRect(0, 0, canvasW, canvasH);
+    drawFlash(ctx, state.deathFlash, "rgb(255, 30, 30)", canvasW, canvasH);
   }
   if (state.goalFlash > 0) {
-    ctx.fillStyle = `rgba(64, 255, 112, ${state.goalFlash * 0.45})`;
-    ctx.fillRect(0, 0, canvasW, canvasH);
+    drawFlash(ctx, state.goalFlash * 0.6, "rgb(64, 255, 112)", canvasW, canvasH);
   }
 
-  if (!state.won) {
-    drawHUD(ctx, state, canvasW, canvasH, hasGhost, ghostIsWinning);
-  }
+  drawHUD(ctx, state, canvasW, canvasH, hasGhost, ghostIsWinning);
 
-  if (state.showControls && !state.won) {
+  if (state.showControls) {
     drawControlsOverlay(ctx, canvasW, canvasH);
-  }
-
-  if (state.won) {
-    drawWinScreen(ctx, state, canvasW, canvasH, time);
   }
 }

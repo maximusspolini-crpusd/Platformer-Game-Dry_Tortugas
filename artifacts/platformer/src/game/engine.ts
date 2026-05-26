@@ -1,7 +1,8 @@
 import { LevelData, Player, TileType, GameState, Particle } from "./types";
-import { LEVELS } from "./levels";
+import { generateLevelString } from "./levels";
 
 export const TILE_SIZE = 32;
+export const TOTAL_LEVELS = 99; // effectively infinite
 
 const GRAVITY = 0.48;
 const JUMP_FORCE = -11;
@@ -13,9 +14,8 @@ const COYOTE_FRAMES = 7;
 const PLAYER_W = 26;
 const PLAYER_H = 28;
 
-export function parseLevel(levelIndex: number): LevelData {
-  const raw = LEVELS[levelIndex];
-  const allLines = raw.split("\n");
+export function parseLevel(levelString: string): LevelData {
+  const allLines = levelString.split("\n");
   const lines = allLines.filter((l) => !l.trimStart().startsWith("#"));
 
   let startCol = 2;
@@ -25,7 +25,7 @@ export function parseLevel(levelIndex: number): LevelData {
   for (let r = 0; r < lines.length; r++) {
     const row: TileType[] = [];
     for (let c = 0; c < lines[r].length; c++) {
-      const ch = lines[r][c] as TileType;
+      const ch = lines[r][c];
       if (ch === "S") {
         startCol = c;
         startRow = r;
@@ -147,7 +147,7 @@ export function updatePlayer(
   player.vy += GRAVITY;
   if (player.vy > MAX_FALL_SPEED) player.vy = MAX_FALL_SPEED;
 
-  // Hold-to-jump: keep buffer full while space is held
+  // Hold-to-jump: refill buffer while space held
   if (input.jumpHeld) {
     player.jumpBufferFrames = 12;
   } else if (player.jumpBufferFrames > 0) {
@@ -156,7 +156,6 @@ export function updatePlayer(
 
   const canJump = player.onGround || player.coyoteFrames > 0;
   if (player.jumpBufferFrames > 0 && canJump) {
-    // Small bonus to jump height at high speed
     const speedBonus = Math.min(Math.abs(player.vx) * 0.04, 1.2);
     player.vy = JUMP_FORCE - speedBonus;
     player.jumpBufferFrames = 0;
@@ -206,7 +205,7 @@ export function updatePlayer(
     player.coyoteFrames--;
   }
 
-  // Tile interaction checks
+  // Tile interaction
   const margin = 2;
   const left = Math.floor((player.x + margin) / TILE_SIZE);
   const right = Math.floor((player.x + player.width - margin) / TILE_SIZE);
@@ -216,24 +215,37 @@ export function updatePlayer(
   outer: for (let r = top; r <= bottom; r++) {
     for (let c = left; c <= right; c++) {
       const t = getTile(levelData, c, r);
-      if (isHazard(t)) { died = true; break outer; }
+      if (isHazard(t)) {
+        died = true;
+        break outer;
+      }
       if (t === "G") reachedGoal = true;
     }
   }
 
   // World bounds
-  if (player.x < 0) { player.x = 0; player.vx = 0; }
+  if (player.x < 0) {
+    player.x = 0;
+    player.vx = 0;
+  }
   if (player.x + player.width > levelData.width) {
     player.x = levelData.width - player.width;
     player.vx = 0;
   }
-  if (player.y < 0) { player.y = 0; player.vy = 0; }
+  if (player.y < 0) {
+    player.y = 0;
+    player.vy = 0;
+  }
   if (player.y > levelData.height + 200) died = true;
 
   return { died, reachedGoal };
 }
 
-function resolveAxis(player: Player, level: LevelData, axis: "x" | "y"): boolean {
+function resolveAxis(
+  player: Player,
+  level: LevelData,
+  axis: "x" | "y"
+): boolean {
   let landed = false;
   const left = Math.floor(player.x / TILE_SIZE);
   const right = Math.floor((player.x + player.width - 0.01) / TILE_SIZE);
@@ -255,11 +267,17 @@ function resolveAxis(player: Player, level: LevelData, axis: "x" | "y"): boolean
       const overlapT = player.y + player.height - tileT;
       const overlapB = tileB - player.y;
 
-      if (overlapL <= 0 || overlapR <= 0 || overlapT <= 0 || overlapB <= 0) continue;
+      if (overlapL <= 0 || overlapR <= 0 || overlapT <= 0 || overlapB <= 0)
+        continue;
 
       if (axis === "x") {
-        if (overlapL < overlapR) { player.x = tileL - player.width; player.vx = 0; }
-        else { player.x = tileR; player.vx = 0; }
+        if (overlapL < overlapR) {
+          player.x = tileL - player.width;
+          player.vx = 0;
+        } else {
+          player.x = tileR;
+          player.vx = 0;
+        }
       } else {
         if (overlapT < overlapB) {
           player.y = tileT - player.height;
@@ -276,7 +294,11 @@ function resolveAxis(player: Player, level: LevelData, axis: "x" | "y"): boolean
   return landed;
 }
 
-export function updateCamera(state: GameState, canvasW: number, canvasH: number) {
+export function updateCamera(
+  state: GameState,
+  canvasW: number,
+  canvasH: number
+) {
   const { player, camera } = state;
   const speed = Math.abs(player.vx);
   const lookAhead = player.facing * speed * 3;
@@ -295,8 +317,11 @@ export function updateCamera(state: GameState, canvasW: number, canvasH: number)
   camera.y += (clampedY - camera.y) * 0.1;
 }
 
-export function initGameState(levelIndex: number): GameState {
-  const levelData = parseLevel(levelIndex);
+export function initGameState(
+  levelIndex: number,
+  levelString: string
+): GameState {
+  const levelData = parseLevel(levelString);
   const player = createPlayer(levelData);
   return {
     level: levelIndex,
@@ -328,4 +353,7 @@ export function resetPlayer(state: GameState, x: number, y: number) {
   state.deaths++;
 }
 
-export const TOTAL_LEVELS = LEVELS.length;
+/** Generate a fresh random level string for the given index. */
+export function makeLevelString(levelIndex: number): string {
+  return generateLevelString(levelIndex, Date.now() ^ (Math.random() * 0xffffffff));
+}

@@ -6,7 +6,7 @@ import {
   updateParticles,
   spawnParticles,
   resetPlayer,
-  TOTAL_LEVELS,
+  makeLevelString,
 } from "../game/engine";
 import { render } from "../game/renderer";
 import { GameState, GhostFrame } from "../game/types";
@@ -14,27 +14,40 @@ import { GameState, GhostFrame } from "../game/types";
 const CANVAS_W = 900;
 const CANVAS_H = 560;
 
-// Ghost storage — persists across level transitions within the session
-// Key: level index → fastest run frames
+// Per-level ghost storage: fastest run recorded this session
 const levelGhosts: Record<number, GhostFrame[]> = {};
 
 export default function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<GameState>(initGameState(0));
+  const stateRef = useRef<GameState>(
+    initGameState(0, makeLevelString(0))
+  );
   const keysRef = useRef<Set<string>>(new Set());
   const rafRef = useRef<number>(0);
   const timeRef = useRef(0);
 
-  // Ghost recording state
+  // Ghost recording
   const recordingRef = useRef<GhostFrame[]>([]);
   const ghostFrameIdxRef = useRef(0);
-  // Spawn position for current level (used on death restart)
-  const spawnRef = useRef({ x: stateRef.current.player.x, y: stateRef.current.player.y });
+
+  // The level string for the current level (kept across deaths, regenerated on level change)
+  const levelStringRef = useRef<string>("");
+  const spawnRef = useRef({
+    x: stateRef.current.player.x,
+    y: stateRef.current.player.y,
+  });
 
   const startLevel = useCallback(
-    (levelIndex: number, preserveDeaths = false, preserveTime = false) => {
+    (levelIndex: number, preserveDeaths = false, preserveTime = false, reuseString = false) => {
       const prev = stateRef.current;
-      const next = initGameState(levelIndex);
+
+      // Only generate a new layout when actually changing to a different level
+      const levelStr = reuseString && levelStringRef.current
+        ? levelStringRef.current
+        : makeLevelString(levelIndex);
+      levelStringRef.current = levelStr;
+
+      const next = initGameState(levelIndex, levelStr);
       if (preserveDeaths) next.deaths = prev.deaths;
       if (preserveTime) next.time = prev.time;
       stateRef.current = next;
@@ -45,18 +58,22 @@ export default function Game() {
     []
   );
 
+  // Initialise level string on first mount
+  useEffect(() => {
+    levelStringRef.current = makeLevelString(0);
+    const next = initGameState(0, levelStringRef.current);
+    stateRef.current = next;
+    spawnRef.current = { x: next.player.x, y: next.player.y };
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.type === "keydown") {
         keysRef.current.add(e.code);
 
         if (e.code === "KeyR") {
-          const s = stateRef.current;
-          if (s.won) {
-            startLevel(0);
-          } else {
-            startLevel(s.level);
-          }
+          // R restarts the current level with a brand-new random layout
+          startLevel(stateRef.current.level, false, false, false);
         }
         if (e.code === "Tab") {
           e.preventDefault();
@@ -92,19 +109,15 @@ export default function Game() {
       timeRef.current++;
       const state = stateRef.current;
 
-      // Determine ghost frame for this render
+      // Ghost playback
       const ghost = levelGhosts[state.level] ?? null;
       const ghostIdx = ghostFrameIdxRef.current;
       const ghostFrame: GhostFrame | null = ghost
         ? ghost[Math.min(ghostIdx, ghost.length - 1)]
         : null;
+      const ghostIsWinning = ghost ? ghostIdx < ghost.length - 1 : false;
 
-      // Ghost comparison: are we ahead or behind?
-      const ghostIsWinning = ghost
-        ? ghostIdx < ghost.length - 1
-        : false;
-
-      if (state.won || state.showControls) {
+      if (state.showControls) {
         render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current, ghostFrame, !!ghost, ghostIsWinning);
         rafRef.current = requestAnimationFrame(loop);
         return;
@@ -112,24 +125,18 @@ export default function Game() {
 
       state.time++;
 
-      // Fade flashes
       if (state.deathFlash > 0) state.deathFlash -= 0.05;
 
-      // Goal transition
+      // Goal flash countdown → then advance level
       if (state.goalFlash > 0) {
         state.goalFlash -= 0.025;
         if (state.goalFlash <= 0) {
           const nextLevel = state.level + 1;
-          if (nextLevel >= TOTAL_LEVELS) {
-            state.won = true;
-          } else {
-            startLevel(nextLevel, true, true);
-          }
+          startLevel(nextLevel, true, true, false);
           render(ctx, stateRef.current, CANVAS_W, CANVAS_H, timeRef.current, null, false, false);
           rafRef.current = requestAnimationFrame(loop);
           return;
         }
-        // During flash, still render but skip physics
         render(ctx, state, CANVAS_W, CANVAS_H, timeRef.current, null, !!ghost, ghostIsWinning);
         rafRef.current = requestAnimationFrame(loop);
         return;
@@ -139,15 +146,13 @@ export default function Game() {
       const left = keys.has("KeyA") || keys.has("ArrowLeft");
       const right = keys.has("KeyD") || keys.has("ArrowRight");
       const jumpHeld =
-        keys.has("Space") ||
-        keys.has("ArrowUp") ||
-        keys.has("KeyW");
+        keys.has("Space") || keys.has("ArrowUp") || keys.has("KeyW");
 
       updateParticles(state.particles);
 
       const result = updatePlayer(state, { left, right, jumpHeld });
 
-      // Record player position every frame (sample every 2 frames for efficiency)
+      // Record position every 2 frames for ghost
       if (timeRef.current % 2 === 0) {
         recordingRef.current.push({
           x: state.player.x,
@@ -167,7 +172,7 @@ export default function Game() {
           5
         );
         resetPlayer(state, spawnRef.current.x, spawnRef.current.y);
-        // Reset recording and ghost playback on death
+        // Reset ghost playback; keep recording fresh
         recordingRef.current = [];
         ghostFrameIdxRef.current = 0;
       }
@@ -175,10 +180,9 @@ export default function Game() {
       if (result.reachedGoal && state.goalFlash <= 0) {
         state.goalFlash = 1;
 
-        // Save ghost if this run was faster
+        // Save ghost if this run is the fastest for this level
         const prevGhost = levelGhosts[state.level];
-        const recLen = recordingRef.current.length;
-        if (!prevGhost || recLen < prevGhost.length) {
+        if (!prevGhost || recordingRef.current.length < prevGhost.length) {
           levelGhosts[state.level] = [...recordingRef.current];
         }
 
@@ -272,11 +276,24 @@ function MobileControls({
       }}
     >
       <div style={{ display: "flex", gap: 8, pointerEvents: "all" }}>
-        <Btn label="◄" onDown={() => press("ArrowLeft")} onUp={() => release("ArrowLeft")} />
-        <Btn label="►" onDown={() => press("ArrowRight")} onUp={() => release("ArrowRight")} />
+        <Btn
+          label="◄"
+          onDown={() => press("ArrowLeft")}
+          onUp={() => release("ArrowLeft")}
+        />
+        <Btn
+          label="►"
+          onDown={() => press("ArrowRight")}
+          onUp={() => release("ArrowRight")}
+        />
       </div>
       <div style={{ pointerEvents: "all" }}>
-        <Btn label="JUMP" onDown={() => press("Space")} onUp={() => release("Space")} wide />
+        <Btn
+          label="JUMP"
+          onDown={() => press("Space")}
+          onUp={() => release("Space")}
+          wide
+        />
       </div>
     </div>
   );
@@ -295,8 +312,14 @@ function Btn({
 }) {
   return (
     <button
-      onPointerDown={(e) => { e.preventDefault(); onDown(); }}
-      onPointerUp={(e) => { e.preventDefault(); onUp(); }}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        onDown();
+      }}
+      onPointerUp={(e) => {
+        e.preventDefault();
+        onUp();
+      }}
       onPointerLeave={onUp}
       style={{
         background: "rgba(50,200,150,0.12)",
