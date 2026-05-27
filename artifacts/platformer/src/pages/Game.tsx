@@ -15,24 +15,27 @@ import { HANDMADE_LEVELS, HANDMADE_LEVEL_COUNT } from "../game/handmadeLevels";
 const CANVAS_W = 900;
 const CANVAS_H = 560;
 
-type GameMode = "handmade" | "procedural";
+type GameMode = "handmade" | "procedural" | "custom";
 
 interface GameProps {
   mode: GameMode;
+  customLevelString?: string;
   onBackToMenu: () => void;
   onPlayEndless: () => void;
+  onOpenEditor?: () => void;
 }
 
-function getLevelString(mode: GameMode, levelIndex: number, existingStr?: string): string {
+function getLevelString(mode: GameMode, levelIndex: number, customLevel?: string, existingStr?: string): string {
+  if (mode === "custom" && customLevel) return customLevel;
   if (mode === "handmade") {
     return HANDMADE_LEVELS[levelIndex] ?? HANDMADE_LEVELS[HANDMADE_LEVELS.length - 1];
   }
   return existingStr || makeLevelString(levelIndex);
 }
 
-export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
+export default function Game({ mode, customLevelString, onBackToMenu, onPlayEndless, onOpenEditor }: GameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const levelStringRef = useRef<string>(getLevelString(mode, 0));
+  const levelStringRef = useRef<string>(getLevelString(mode, 0, customLevelString));
   const stateRef = useRef<GameState>(initGameState(0, levelStringRef.current));
   const keysRef = useRef<Set<string>>(new Set());
   const rafRef = useRef<number>(0);
@@ -51,7 +54,7 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
 
       const levelStr = reuseString && levelStringRef.current
         ? levelStringRef.current
-        : getLevelString(mode, levelIndex);
+        : getLevelString(mode, levelIndex, customLevelString);
       levelStringRef.current = levelStr;
 
       const next = initGameState(levelIndex, levelStr);
@@ -60,7 +63,7 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
       stateRef.current = next;
       spawnRef.current = { x: next.player.x, y: next.player.y };
     },
-    [mode]
+    [mode, customLevelString]
   );
 
   const togglePause = useCallback(() => {
@@ -76,21 +79,21 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.type === "keydown") {
-        // Pause toggle
         if (e.code === "Escape" || e.code === "KeyP") {
           togglePause();
           return;
         }
         keysRef.current.add(e.code);
         if (e.code === "KeyR") {
-          // R: restart current level with a new random layout (procedural) or same (handmade)
           const isHandmade = mode === "handmade";
+          const isCustom = mode === "custom";
           levelStringRef.current = getLevelString(
             mode,
             stateRef.current.level,
-            isHandmade ? levelStringRef.current : undefined
+            customLevelString,
+            isHandmade || isCustom ? levelStringRef.current : undefined
           );
-          startLevel(stateRef.current.level, { reuseString: isHandmade });
+          startLevel(stateRef.current.level, { reuseString: isHandmade || isCustom });
           pausedRef.current = false;
           setPaused(false);
           setHandmadeComplete(false);
@@ -108,7 +111,7 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKey);
     };
-  }, [mode, startLevel, togglePause]);
+  }, [mode, customLevelString, startLevel, togglePause]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -116,18 +119,14 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const levelLabel =
-      mode === "handmade"
-        ? `LEVEL ${stateRef.current.level + 1} / ${HANDMADE_LEVEL_COUNT}`
-        : `LEVEL ${stateRef.current.level + 1}`;
-
     const loop = () => {
       timeRef.current++;
       const state = stateRef.current;
 
-      // Update label in case level changed
       const label =
-        mode === "handmade"
+        mode === "custom"
+          ? "CUSTOM LEVEL"
+          : mode === "handmade"
           ? `LEVEL ${state.level + 1} / ${HANDMADE_LEVEL_COUNT}`
           : `LEVEL ${state.level + 1}`;
 
@@ -140,16 +139,20 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
       state.time++;
       if (state.deathFlash > 0) state.deathFlash -= 0.05;
 
-      // Goal flash → level transition
       if (state.goalFlash > 0) {
         state.goalFlash -= 0.025;
         if (state.goalFlash <= 0) {
-          const nextLevel = state.level + 1;
-          if (mode === "handmade" && nextLevel >= HANDMADE_LEVELS.length) {
-            setHandmadeComplete(true);
-            setCompleteStats({ deaths: state.deaths, time: state.time });
+          if (mode === "custom") {
+            // Loop the custom level
+            startLevel(0, { preserveDeaths: true, preserveTime: true });
           } else {
-            startLevel(nextLevel, { preserveDeaths: true, preserveTime: true });
+            const nextLevel = state.level + 1;
+            if (mode === "handmade" && nextLevel >= HANDMADE_LEVELS.length) {
+              setHandmadeComplete(true);
+              setCompleteStats({ deaths: state.deaths, time: state.time });
+            } else {
+              startLevel(nextLevel, { preserveDeaths: true, preserveTime: true });
+            }
           }
         }
         render(ctx, stateRef.current, CANVAS_W, CANVAS_H, timeRef.current, label);
@@ -194,7 +197,6 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
       rafRef.current = requestAnimationFrame(loop);
     };
 
-    void levelLabel; // used by inner label closure
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
   }, [mode, startLevel]);
@@ -227,15 +229,18 @@ export default function Game({ mode, onBackToMenu, onPlayEndless }: GameProps) {
         {/* Pause overlay */}
         {paused && !handmadeComplete && (
           <Overlay>
-            <OverlayTitle>PAUSED</OverlayTitle>
+            <OverlayTitle>{mode === "custom" ? "CUSTOM LEVEL — PAUSED" : "PAUSED"}</OverlayTitle>
             <OverlayBtn primary onClick={resume}>▶  RESUME</OverlayBtn>
+            {mode === "custom" && onOpenEditor && (
+              <OverlayBtn onClick={onOpenEditor}>✏  BACK TO EDITOR</OverlayBtn>
+            )}
             {mode === "handmade" && (
               <OverlayBtn onClick={onPlayEndless}>∞  PLAY ENDLESS</OverlayBtn>
             )}
             <OverlayBtn onClick={onBackToMenu}>⌂  BACK TO MENU</OverlayBtn>
             <OverlayHint>
               A/D — Move &nbsp;·&nbsp; Hold Space — Jump<br />
-              R — New layout &nbsp;·&nbsp; Esc — Pause
+              R — Restart level &nbsp;·&nbsp; Esc — Pause
             </OverlayHint>
           </Overlay>
         )}
@@ -281,7 +286,7 @@ function OverlayTitle({ children, glow }: { children: React.ReactNode; glow?: bo
     <div
       style={{
         fontFamily: "'Courier New', monospace",
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: "bold",
         letterSpacing: 4,
         color: glow ? "#40ff70" : "#e0e0ff",
@@ -310,7 +315,7 @@ function OverlayBtn({
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        width: 220,
+        width: 240,
         padding: "12px 0",
         fontFamily: "'Courier New', monospace",
         fontSize: 14,

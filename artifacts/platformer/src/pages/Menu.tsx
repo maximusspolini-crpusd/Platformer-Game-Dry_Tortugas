@@ -5,10 +5,11 @@ type GameMode = "handmade" | "procedural";
 
 interface MenuProps {
   onStart: (mode: GameMode) => void;
+  onOpenEditor: () => void;
 }
 
-export default function Menu({ onStart }: MenuProps) {
-  const [hovered, setHovered] = useState<GameMode | null>(null);
+export default function Menu({ onStart, onOpenEditor }: MenuProps) {
+  const [hovered, setHovered] = useState<GameMode | "editor" | null>(null);
 
   return (
     <div
@@ -67,7 +68,7 @@ export default function Menu({ onStart }: MenuProps) {
       </div>
 
       {/* Mode cards */}
-      <div style={{ display: "flex", gap: 24, marginBottom: 48 }}>
+      <div style={{ display: "flex", gap: 24, marginBottom: 28 }}>
         <ModeCard
           title="HANDMADE"
           subtitle={`${HANDMADE_LEVEL_COUNT} crafted ${HANDMADE_LEVEL_COUNT === 1 ? "level" : "levels"}`}
@@ -89,6 +90,34 @@ export default function Menu({ onStart }: MenuProps) {
           onClick={() => onStart("procedural")}
         />
       </div>
+
+      {/* Level Editor button */}
+      <button
+        onMouseEnter={() => setHovered("editor")}
+        onMouseLeave={() => setHovered(null)}
+        onClick={onOpenEditor}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 28px",
+          background: hovered === "editor" ? "rgba(100,140,255,0.1)" : "rgba(255,255,255,0.03)",
+          border: `1px solid ${hovered === "editor" ? "rgba(100,140,255,0.5)" : "rgba(255,255,255,0.07)"}`,
+          borderRadius: 8,
+          cursor: "pointer",
+          fontFamily: "'Courier New', monospace",
+          fontSize: 13,
+          letterSpacing: 2,
+          fontWeight: "bold",
+          color: hovered === "editor" ? "#8aabff" : "#4a5a70",
+          transition: "all 0.18s ease",
+          marginBottom: 40,
+          boxShadow: hovered === "editor" ? "0 0 20px rgba(100,140,255,0.12)" : "none",
+        }}
+      >
+        <span style={{ fontSize: 16 }}>✏</span>
+        LEVEL EDITOR
+      </button>
 
       {/* Controls hint */}
       <div
@@ -150,7 +179,6 @@ function ModeCard({
         transform: active ? "translateY(-2px)" : "none",
       }}
     >
-      {/* Badge */}
       <div
         style={{
           fontSize: 10,
@@ -165,8 +193,6 @@ function ModeCard({
       >
         {badge}
       </div>
-
-      {/* Title */}
       <div
         style={{
           fontSize: 22,
@@ -179,8 +205,6 @@ function ModeCard({
       >
         {title}
       </div>
-
-      {/* Subtitle */}
       <div
         style={{
           fontSize: 12,
@@ -192,8 +216,6 @@ function ModeCard({
       >
         {subtitle}
       </div>
-
-      {/* Play arrow */}
       <div
         style={{
           marginTop: 4,
