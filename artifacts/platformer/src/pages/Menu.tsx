@@ -50,7 +50,7 @@ export default function Menu({ onStart }: MenuProps) {
             lineHeight: 1.1,
           }}
         >
-          RUNNER
+          PLATFORMER
         </div>
       </div>
 
